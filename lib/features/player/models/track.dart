@@ -1,4 +1,6 @@
 enum AudioSourceType {local,remote}
+///enum is a fixed named set of values
+///instead of representing it wiht a string or an int we get a real type that the compiler checks
 class Track {
   final String id;
 
@@ -64,7 +66,7 @@ class Track {
   @override
   int get hashCode => id.hashCode;
 }
-///The == and hashCode override by default,
+///The == and hashCode override by default
 /// Dart compares two objects by whether they're literally the same object in memory
 /// we want two Tracks with the same id to be treated as "the same track" even if one is a slightly newer copy for examole in case of copyWith bumped playCount
 /// overriding "==" lets you write list.contains(track) or trackA == trackB and get sensible results
