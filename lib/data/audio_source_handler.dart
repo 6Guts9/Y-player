@@ -23,6 +23,18 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
     await _player.setAudioSource(_toAudioSource(track, item));
     await _player.play();
   }
+  Future<void> loadQueue(List<Track> tracks, {int initialIndex = 0}) async {
+    final items = tracks.map(_toMediaItem).toList();
+    queue.add(items);
+
+    final sources =[
+        for (var i = 0; i < tracks.length; i++)
+          _toAudioSource(tracks[i], items[i]),
+      ];
+
+    await _player.setAudioSources(sources, initialIndex: initialIndex);
+    await _player.play();
+  }
 
   AudioSource _toAudioSource(Track track, MediaItem tag) {
     return track.sourceType == AudioSourceType.remote
