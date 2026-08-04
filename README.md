@@ -10,7 +10,7 @@ my project for creating a music player service
 
 # 2. riverpod: https://pub.dev/packages/riverpod
  - is a reactive caching and compile-safe state management framework for Flutter. It acts as a complete rewrite of the popular provider package to eliminate reliance on Flutter's BuildContext. This allows developers to safely access, share, and test application state from anywhere in the Dart environment.
- - Core ConceptsProviders:
+   Core ConceptsProviders:
  -  Global declarations that encapsulate a piece of state and allow widgets to reactively listen to changes
  -  ProviderScope: A required root widget that stores the actual state of all providers used throughout the application
  -  WidgetRef: An object provided to modern Riverpod widgets that enables interaction with providers via ref.watch or ref.read
