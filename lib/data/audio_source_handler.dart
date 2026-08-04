@@ -35,12 +35,19 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
     await _player.setAudioSources(sources, initialIndex: initialIndex);
     await _player.play();
   }
+  Future<void> setShuffleEnabled(bool enabled) =>
+      _player.setShuffleModeEnabled(enabled);
 
+  Future<void> setLoopMode(LoopMode mode) => _player.setLoopMode(mode);
+
+  Future<void> dispose() => _player.dispose();
+  
   AudioSource _toAudioSource(Track track, MediaItem tag) {
     return track.sourceType == AudioSourceType.remote
         ? AudioSource.uri(Uri.parse(track.uri), tag: tag)
         : AudioSource.uri(Uri.file(track.uri), tag: tag);
   }
+
 
   MediaItem _toMediaItem(Track track) => MediaItem(
     id: track.id,

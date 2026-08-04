@@ -6,7 +6,7 @@ class PlaybackState {
   final Track ? currentTrack ;
   final PlayerStatus status ;
   final Duration position ;
-  final Duration bufferedPostion;
+  final Duration bufferedPosition;
   final bool isShuffeledEnabled;
   final RepeatMode repeatMode;
 
@@ -14,7 +14,7 @@ const PlaybackState({
   this.currentTrack,
   this.status = PlayerStatus.idle,
   this.position = Duration.zero,
-  this.bufferedPostion = Duration.zero,
+  this.bufferedPosition = Duration.zero,
   this.isShuffeledEnabled = false,
   this.repeatMode = RepeatMode.off,
 });
@@ -33,7 +33,7 @@ PlaybackState copyWith ({
  Track? currentTrack,
   PlayerStatus? status,
   Duration? position,
-  Duration? bufferedPostion,
+  Duration? bufferedPosition,
   bool? isShuffeledEnabled,
   RepeatMode? repeatMode,
 }){
@@ -41,7 +41,7 @@ PlaybackState copyWith ({
   currentTrack: currentTrack ?? this.currentTrack,
   status: status ?? this.status,
   position: position ?? this.position,
-    bufferedPostion: bufferedPostion ?? this.bufferedPostion,
+    bufferedPosition: bufferedPosition ?? this.bufferedPosition,
   isShuffeledEnabled: isShuffeledEnabled ?? this.isShuffeledEnabled,
   repeatMode: repeatMode ?? this.repeatMode,
   );
