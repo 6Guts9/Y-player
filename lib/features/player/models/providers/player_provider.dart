@@ -69,9 +69,9 @@ class PlayerNotifier extends StateNotifier<PlaybackState> {
   Future<void> skipPrevious() => _handler.skipToPrevious();
 
   Future<void> toggleShuffle() async {
-    final next = !state.isShuffeledEnabled;
+    final next = !state.isShuffleEnabled;
     await _handler.setShuffleEnabled(next);
-    state = state.copyWith(isShuffeledEnabled: next);
+    state = state.copyWith(isShuffleEnabled: next);
   }
 
   Future<void> cycleRepeatMode() async {
@@ -88,3 +88,8 @@ class PlayerNotifier extends StateNotifier<PlaybackState> {
     state = state.copyWith(repeatMode: next);
   }
 }
+
+final playerProvider = StateNotifierProvider<PlayerNotifier, PlaybackState>((ref) {
+  final handler = ref.watch(audioHandlerProvider);
+  return PlayerNotifier(handler);
+});

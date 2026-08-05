@@ -7,7 +7,7 @@ class PlaybackState {
   final PlayerStatus status ;
   final Duration position ;
   final Duration bufferedPosition;
-  final bool isShuffeledEnabled;
+  final bool isShuffleEnabled;
   final RepeatMode repeatMode;
 
 const PlaybackState({
@@ -15,7 +15,7 @@ const PlaybackState({
   this.status = PlayerStatus.idle,
   this.position = Duration.zero,
   this.bufferedPosition = Duration.zero,
-  this.isShuffeledEnabled = false,
+  this.isShuffleEnabled = false,
   this.repeatMode = RepeatMode.off,
 });
 
@@ -34,7 +34,7 @@ PlaybackState copyWith ({
   PlayerStatus? status,
   Duration? position,
   Duration? bufferedPosition,
-  bool? isShuffeledEnabled,
+  bool? isShuffleEnabled,
   RepeatMode? repeatMode,
 }){
   return PlaybackState(
@@ -42,7 +42,7 @@ PlaybackState copyWith ({
   status: status ?? this.status,
   position: position ?? this.position,
     bufferedPosition: bufferedPosition ?? this.bufferedPosition,
-  isShuffeledEnabled: isShuffeledEnabled ?? this.isShuffeledEnabled,
+  isShuffleEnabled: isShuffleEnabled ?? this.isShuffleEnabled,
   repeatMode: repeatMode ?? this.repeatMode,
   );
 }
