@@ -56,4 +56,24 @@ Playlist withTrackRemoved(String trackId){
 }
 ///while here when removing a track we filter the list looking for the specific id and then create a new list with copyWith
 /// adding all the tracks except for the filtered one
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'name': name,
+    'description': description,
+    'trackIds': trackIds,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+    'coverArtUri': coverArtUri,
+  };
+
+  factory Playlist.fromMap(Map map) => Playlist(
+    id: map['id'] as String,
+    name: map['name'] as String,
+    description: map['description'] as String?,
+    trackIds: List<String>.from(map['trackIds'] as List? ?? const []),
+    createdAt: DateTime.parse(map['createdAt'] as String),
+    updatedAt: DateTime.parse(map['updatedAt'] as String),
+    coverArtUri: map['coverArtUri'] as String?,
+  );
 }

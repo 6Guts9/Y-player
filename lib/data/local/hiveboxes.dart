@@ -1,9 +1,8 @@
-import 'dart:ffi';
 
 import 'package:hive_flutter/hive_flutter.dart';
 
-class Hiveboxes {
-  Hiveboxes._();
+class HiveBoxes {
+  HiveBoxes._();
   static const String tracks ='track_box';
   static const String playlists = 'playlist_box';
   static late Box<Map> tracksBox;
