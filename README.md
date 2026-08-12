@@ -23,4 +23,5 @@ my project for creating a music player service
 # 4. audio_service: https://pub.dev/packages/audio_service
 
 — doesn't play anything itself. It's the bridge to the operating system: the lock-screen controls, the notification with play/pause/skip buttons, and — critically — permission to keep playing audio when the screen is off or the app is backgrounded. Without it, iOS/Android will just kill your audio the moment the app isn't in the foreground.
-
+# 5. on_audio_query: https://pub.dev/packages/on_audio_query
+Flutter Plugin used to query audios/songs  infos [title, artist, album, etc..] from device storage.

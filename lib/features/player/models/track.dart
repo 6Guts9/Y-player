@@ -1,3 +1,5 @@
+import 'package:on_audio_query/on_audio_query.dart';
+
 enum AudioSourceType {local,remote}
 ///enum is a fixed named set of values
 ///instead of representing it wiht a string or an int we get a real type that the compiler checks
@@ -65,6 +67,23 @@ class Track {
   bool operator ==(Object other) => other is Track && other.id == id;
   @override
   int get hashCode => id.hashCode;
+
+  factory Track.fromLibrary(SongModel model, {int playCount = 0, bool isFavorite = false}) {
+    return Track(
+      id: model.id.toString(),
+      title: model.title,
+      artist: model.artist ?? 'Unknown artist',
+      album: model.album,
+      uri: model.data,
+      sourceType: AudioSourceType.local,
+      duration: Duration(milliseconds: model.duration ?? 0),
+      dateAdded: model.dateAdded != null
+          ? DateTime.fromMillisecondsSinceEpoch(model.dateAdded! * 1000)
+          : DateTime.now(),
+      playCount: playCount,
+      isFavorite: isFavorite,
+    );
+  }
 }
 ///The == and hashCode override by default
 /// Dart compares two objects by whether they're literally the same object in memory

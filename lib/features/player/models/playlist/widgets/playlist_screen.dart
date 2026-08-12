@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/themes/theme_picker_screen.dart';
 import '../providers/playlist_provider.dart';
 
 class PlaylistScreen extends ConsumerWidget {
@@ -11,7 +12,17 @@ class PlaylistScreen extends ConsumerWidget {
     final playlists = ref.watch(playlistProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Playlists')),
+      appBar: AppBar(
+          title: const Text('Playlists')
+      ,actions: [ IconButton(
+        icon: const Icon(Icons.palette_outlined),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ThemePickerScreen()),
+        ),
+      ),],
+
+      ),
       body: playlists.isEmpty
           ? const Center(child: Text('No playlists yet — tap + to create one'))
           : ListView.builder(
