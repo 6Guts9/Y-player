@@ -67,7 +67,12 @@ class Track {
   bool operator ==(Object other) => other is Track && other.id == id;
   @override
   int get hashCode => id.hashCode;
-
+  ///The == and hashCode override by default
+  /// Dart compares two objects by whether they're literally the same object in memory
+  /// we want two Tracks with the same id to be treated as "the same track" even if one is a slightly newer copy for examole in case of copyWith bumped playCount
+  /// overriding "==" lets you write list.contains(track) or trackA == trackB and get sensible results
+  /// hashCode has to be overridden alongside it
+  ///it's a Dart rule: if two objects are == equal ,they must produce the same hashcode or things like Set and Map lookups break.
   factory Track.fromLibrary(SongModel model, {int playCount = 0, bool isFavorite = false}) {
     return Track(
       id: model.id.toString(),
@@ -84,10 +89,7 @@ class Track {
       isFavorite: isFavorite,
     );
   }
+
 }
-///The == and hashCode override by default
-/// Dart compares two objects by whether they're literally the same object in memory
-/// we want two Tracks with the same id to be treated as "the same track" even if one is a slightly newer copy for examole in case of copyWith bumped playCount
-/// overriding "==" lets you write list.contains(track) or trackA == trackB and get sensible results
-/// hashCode has to be overridden alongside it
-///it's a Dart rule: if two objects are == equal ,they must produce the same hashcode or things like Set and Map lookups break.
+
+
