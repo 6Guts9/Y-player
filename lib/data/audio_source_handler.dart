@@ -27,12 +27,15 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
     final items = tracks.map(_toMediaItem).toList();
     queue.add(items);
 
-    final sources =[
-        for (var i = 0; i < tracks.length; i++)
-          _toAudioSource(tracks[i], items[i]),
-      ];
+    final sources = [
+      for (var i = 0; i < tracks.length; i++)
+        _toAudioSource(tracks[i], items[i]),
+    ];
 
-    await _player.setAudioSources(sources, initialIndex: initialIndex);
+    await _player.setAudioSource(
+      ConcatenatingAudioSource(children: sources),
+      initialIndex: initialIndex,
+    );
     await _player.play();
   }
   Future<void> setShuffleEnabled(bool enabled) =>

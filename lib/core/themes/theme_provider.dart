@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '/../data/local/hiveboxes.dart';
+import '../../data/local/hiveboxes.dart';
 import 'theme.dart';
 
 const _themePresetKey = 'theme_preset';

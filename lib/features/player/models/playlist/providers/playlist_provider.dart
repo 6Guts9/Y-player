@@ -35,4 +35,15 @@ class PlaylistNotifier extends StateNotifier<List<Playlist>> {
     await HiveBoxes.playlistsBox.delete(playlistId);
     state = state.where((p) => p.id != playlistId).toList();
   }
+  Future<void> addTrack(String playlistId, String trackId) async {
+    final index = state.indexWhere((p) => p.id == playlistId);
+    if (index == -1) return;
+
+    final updated = state[index].withTrackAdded(trackId);
+    await HiveBoxes.playlistsBox.put(updated.id, updated.toMap());
+
+    state = [
+      for (final p in state) if (p.id == playlistId) updated else p,
+    ];
+  }
 }
