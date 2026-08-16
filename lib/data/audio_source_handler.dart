@@ -31,7 +31,6 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
       for (var i = 0; i < tracks.length; i++)
         _toAudioSource(tracks[i], items[i]),
     ];
-
     await _player.setAudioSource(
       ConcatenatingAudioSource(children: sources),
       initialIndex: initialIndex,

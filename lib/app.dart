@@ -6,8 +6,6 @@ import 'core/themes/theme_provider.dart';
 import 'features/player/models/playlist/widgets/library_screen.dart';
 import 'features/player/models/playlist/widgets/playlist_screen.dart';
 import 'features/player/models/widgets/mini_player.dart';
-
-
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
