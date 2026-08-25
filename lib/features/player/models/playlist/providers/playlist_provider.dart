@@ -10,6 +10,18 @@ StateNotifierProvider<PlaylistNotifier, List<Playlist>>((ref) {
 });
 
 class PlaylistNotifier extends StateNotifier<List<Playlist>> {
+
+  Future<void> removeTrack(String playlistId, String trackId) async {
+    final index = state.indexWhere((p) => p.id == playlistId);
+    if (index == -1) return;
+
+    final updated = state[index].withTrackRemoved(trackId);
+    await HiveBoxes.playlistsBox.put(updated.id, updated.toMap());
+
+    state = [
+      for (final p in state) if (p.id == playlistId) updated else p,
+    ];
+  } 
   static const _uuid = Uuid();
 
   PlaylistNotifier() : super(_loadAll());

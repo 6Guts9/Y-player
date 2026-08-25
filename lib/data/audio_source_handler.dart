@@ -10,11 +10,20 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
     playbackState.add(playbackState.value.copyWith(
       playing: _player.playing,
       updatePosition: _player.position,
+      bufferedPosition: _player.bufferedPosition,
       controls: [
         MediaControl.skipToPrevious,
         _player.playing ? MediaControl.pause : MediaControl.play,
         MediaControl.skipToNext,
       ],
+      processingState: switch (_player.processingState) {
+        ProcessingState.idle => AudioProcessingState.idle,
+        ProcessingState.loading => AudioProcessingState.loading,
+        ProcessingState.buffering => AudioProcessingState.buffering,
+        ProcessingState.ready => AudioProcessingState.ready,
+        ProcessingState.completed => AudioProcessingState.completed,
+      },
+      queueIndex: event.currentIndex,
     ));
   }
   Future<void> playTrack(Track track) async {

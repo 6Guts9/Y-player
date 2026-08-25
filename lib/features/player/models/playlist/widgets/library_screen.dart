@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'playlist_screen_details.dart';
 import '../../providers/library_provider.dart';
 import '../../providers/player_provider.dart';
 import '../../track.dart';
@@ -32,9 +32,7 @@ class LibraryScreen extends ConsumerWidget {
                 icon: const Icon(Icons.playlist_add),
                 onPressed: () => _showAddToPlaylist(context, track),
               ),
-              onTap: () => ref
-                  .read(playerProvider.notifier)
-                  .playQueue(tracks, startIndex: index),
+              onTap: () => ref.read(playerProvider.notifier).playQueue(tracks, startIndex: index),
             );
           },
         ),

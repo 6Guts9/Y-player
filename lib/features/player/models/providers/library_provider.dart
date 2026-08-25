@@ -21,7 +21,9 @@ class TrackLibraryNotifier extends StateNotifier<List<Track>> {
     final granted = await _service.requestPermission();
     if (!granted) return;
 
-    final songs = await _service.scanLibrary();
+    final songs = (await _service.scanLibrary())
+        .where((song) => song.isMusic ?? false)
+        .toList();
     state = songs.map((song) {
       final extras = HiveBoxes.tracksBox.get(song.id.toString());
       return Track.fromLibrary(

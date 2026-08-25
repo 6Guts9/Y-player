@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart' hide RepeatMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:on_audio_query/on_audio_query.dart';
 import '../providers/player_provider.dart';
 import '../player_status.dart';
 import 'bar_player.dart';
@@ -20,14 +20,15 @@ class FullPlayer extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 220,
-              height: 220,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(Icons.music_note, size: 64),
+            track == null
+                ? _artworkPlaceholder(context)
+                : QueryArtworkWidget(
+              id: int.parse(track.id),
+              type: ArtworkType.AUDIO,
+              artworkWidth: 220,
+              artworkHeight: 220,
+              artworkBorder: BorderRadius.circular(16),
+              nullArtworkWidget: _artworkPlaceholder(context),
             ),
             const SizedBox(height: 24),
             Text(
@@ -87,4 +88,13 @@ class FullPlayer extends ConsumerWidget {
       ),
     );
   }
+  Widget _artworkPlaceholder(BuildContext context) => Container(
+    width: 220,
+    height: 220,
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.primaryContainer,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: const Icon(Icons.music_note, size: 64),
+  );
 }

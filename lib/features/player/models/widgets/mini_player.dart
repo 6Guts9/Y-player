@@ -48,6 +48,18 @@ class MiniPlayer extends ConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
+                          IconButton(
+                            icon: const Icon(Icons.skip_previous),
+                            onPressed: () => ref.read(playerProvider.notifier).skipPrevious(),
+                          ),
+                          IconButton(
+                            icon: Icon(state.isPlaying ? Icons.pause : Icons.play_arrow),
+                            onPressed: () => ref.read(playerProvider.notifier).togglePlayPause(),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.skip_next),
+                            onPressed: () => ref.read(playerProvider.notifier).skipNext(),
+                          ),
                         ],
                       ),
                     ),

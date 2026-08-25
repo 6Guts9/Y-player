@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'playlist_screen_details.dart';
 import '../../../../../core/themes/theme_picker_screen.dart';
+import '../../providers/player_provider.dart';
+import '../models/playlist.dart';
 import '../providers/playlist_provider.dart';
+import '../../providers/library_provider.dart';
+import '../../track.dart';
 
 class PlaylistScreen extends ConsumerWidget {
   const PlaylistScreen({super.key});
@@ -33,10 +37,22 @@ class PlaylistScreen extends ConsumerWidget {
             leading: const CircleAvatar(child: Icon(Icons.queue_music)),
             title: Text(playlist.name),
             subtitle: Text('${playlist.trackCount} tracks'),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () =>
-                  ref.read(playlistProvider.notifier).delete(playlist.id),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.play_arrow),
+                  onPressed: playlist.trackIds.isEmpty ? null : () => _play(ref, playlist),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () => ref.read(playlistProvider.notifier).delete(playlist.id),
+                ),
+              ],
+            ),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => PlaylistDetailScreen(playlist: playlist)),
             ),
           );
         },
@@ -47,6 +63,7 @@ class PlaylistScreen extends ConsumerWidget {
       ),
     );
   }
+
 
   Future<void> _createPlaylist(BuildContext context, WidgetRef ref) async {
     final controller = TextEditingController();
@@ -74,6 +91,14 @@ class PlaylistScreen extends ConsumerWidget {
 
     if (name != null && name.isNotEmpty) {
       await ref.read(playlistProvider.notifier).create(name);
+    }
+  }
+  void _play(WidgetRef ref, Playlist playlist) {
+    final library = ref.read(trackLibraryProvider);
+    final byId = {for (final t in library) t.id: t};
+    final tracks = playlist.trackIds.map((id) => byId[id]).whereType<Track>().toList();
+    if (tracks.isNotEmpty) {
+      ref.read(playerProvider.notifier).playQueue(tracks);
     }
   }
 }
