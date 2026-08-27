@@ -6,7 +6,7 @@ import '../providers/player_provider.dart';
 class BarPlayer extends ConsumerWidget {
   final bool showLabels;
 
-  const BarPlayer({super.key, this.showLabels = false});
+  const BarPlayer({super.key, this.showLabels = true});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -88,6 +88,9 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
   }
   AudioSourceHandler() {
     _player.playbackEventStream.listen(_broadcastState);
+    _player.positionStream.listen((position){
+      playbackState.add(playbackState.value.copyWith(updatePosition: position));
+    });
   }
 
 ///just_audio doesn't take a Track it takes an AudioSource, built from a Uri

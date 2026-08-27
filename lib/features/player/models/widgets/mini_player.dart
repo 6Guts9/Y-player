@@ -11,8 +11,8 @@ class MiniPlayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(playerProvider);
-    final track = state.currentTrack;
+    // Only watch currentTrack for the metadata
+    final track = ref.watch(playerProvider.select((s) => s.currentTrack));
 
     if (track == null) return const SizedBox.shrink();
 
@@ -48,28 +48,10 @@ class MiniPlayer extends ConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.skip_previous),
-                            onPressed: () => ref.read(playerProvider.notifier).skipPrevious(),
-                          ),
-                          IconButton(
-                            icon: Icon(state.isPlaying ? Icons.pause : Icons.play_arrow),
-                            onPressed: () => ref.read(playerProvider.notifier).togglePlayPause(),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.skip_next),
-                            onPressed: () => ref.read(playerProvider.notifier).skipNext(),
-                          ),
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(
-                        state.isPlaying ? Icons.pause : Icons.play_arrow,
-                      ),
-                      onPressed: () =>
-                          ref.read(playerProvider.notifier).togglePlayPause(),
-                    ),
+                    const _MiniControls(),
                   ],
                 ),
               ),
@@ -77,6 +59,34 @@ class MiniPlayer extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _MiniControls extends ConsumerWidget {
+  const _MiniControls();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPlaying = ref.watch(playerProvider.select((s) => s.isPlaying));
+    final notifier = ref.read(playerProvider.notifier);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.skip_previous),
+          onPressed: notifier.skipPrevious,
+        ),
+        IconButton(
+          icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+          onPressed: notifier.togglePlayPause,
+        ),
+        IconButton(
+          icon: const Icon(Icons.skip_next),
+          onPressed: notifier.skipNext,
+        ),
+      ],
     );
   }
 }
