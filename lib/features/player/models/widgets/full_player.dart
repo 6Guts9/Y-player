@@ -29,6 +29,8 @@ class FullPlayer extends ConsumerWidget {
                     artworkWidth: 220,
                     artworkHeight: 220,
                     artworkBorder: BorderRadius.circular(12),
+                    size: 1000,
+                    quality: 100,
                     nullArtworkWidget: _artworkPlaceholder(context),
                   ),
             const SizedBox(height: 30),
