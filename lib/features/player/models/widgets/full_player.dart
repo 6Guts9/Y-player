@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' hide RepeatMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:on_audio_query/on_audio_query.dart';
+import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
 import '../player_status.dart';
 import 'bar_player.dart';
@@ -10,9 +11,9 @@ class FullPlayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Only watch currentTrack for the top section (Artwork, Title, Artist)
     final track = ref.watch(playerProvider.select((s) => s.currentTrack));
-    final notifier = ref.read(playerProvider.notifier);
+    final library = ref.watch(trackLibraryProvider);
+    final isFavorite = track != null && library.any((t) => t.id == track.id && t.isFavorite);
 
     return SafeArea(
       child: Padding(
@@ -22,17 +23,7 @@ class FullPlayer extends ConsumerWidget {
           children: [
             track == null
                 ? _artworkPlaceholder(context)
-                : QueryArtworkWidget(
-                    key: ValueKey(track.id), // Ensure it stays stable
-                    id: int.parse(track.id),
-                    type: ArtworkType.AUDIO,
-                    artworkWidth: 220,
-                    artworkHeight: 220,
-                    artworkBorder: BorderRadius.circular(12),
-                    size: 1000,
-                    quality: 100,
-                    nullArtworkWidget: _artworkPlaceholder(context),
-                  ),
+                : _ArtworkWidget(trackId: track.id),
             const SizedBox(height: 30),
             Text(
               track?.title ?? 'Nothing playing',
@@ -43,6 +34,18 @@ class FullPlayer extends ConsumerWidget {
               track?.artist ?? '',
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
+                  color: isFavorite ? Colors.red : null,
+                  onPressed: track == null
+                      ? null
+                      : () => ref.read(trackLibraryProvider.notifier).toggleFavorite(track.id),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             const BarPlayer(showLabels: true),
@@ -62,6 +65,34 @@ class FullPlayer extends ConsumerWidget {
         ),
         child: const Icon(Icons.music_note, size: 64),
       );
+}
+
+class _ArtworkWidget extends StatelessWidget {
+  final String trackId;
+  const _ArtworkWidget({required this.trackId});
+
+  @override
+  Widget build(BuildContext context) {
+    return QueryArtworkWidget(
+      key: ValueKey(trackId),
+      id: int.parse(trackId),
+      type: ArtworkType.AUDIO,
+      artworkWidth: 220,
+      artworkHeight: 220,
+      artworkBorder: BorderRadius.circular(12),
+      size: 1000,
+      quality: 100,
+      nullArtworkWidget: Container(
+        width: 220,
+        height: 220,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(Icons.music_note, size: 64),
+      ),
+    );
+  }
 }
 
 class _PlayerControls extends ConsumerWidget {

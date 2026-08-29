@@ -10,9 +10,8 @@ class BarPlayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(playerProvider);
-    final duration = state.currentTrack?.duration ?? Duration.zero;
-    final position = state.position;
+    final position = ref.watch(playerProvider.select((s) => s.position));
+    final duration = ref.watch(playerProvider.select((s) => s.currentTrack?.duration)) ?? Duration.zero;
 
     final maxMs = duration.inMilliseconds > 0
         ? duration.inMilliseconds.toDouble()

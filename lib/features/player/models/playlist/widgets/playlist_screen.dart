@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'favorites_screen.dart';
 import 'playlist_screen_details.dart';
 import '../../../../../core/themes/theme_picker_screen.dart';
 import '../../providers/player_provider.dart';
@@ -17,45 +18,57 @@ class PlaylistScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Playlists')
-      ,actions: [ IconButton(
-        icon: const Icon(Icons.palette_outlined),
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ThemePickerScreen()),
-        ),
-      ),],
-
-      ),
-      body: playlists.isEmpty
-          ? const Center(child: Text('No playlists yet — tap + to create one'))
-          : ListView.builder(
-        itemCount: playlists.length,
-        itemBuilder: (context, index) {
-          final playlist = playlists[index];
-          return ListTile(
-            leading: const CircleAvatar(child: Icon(Icons.queue_music)),
-            title: Text(playlist.name),
-            subtitle: Text('${playlist.trackCount} tracks'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.play_arrow),
-                  onPressed: playlist.trackIds.isEmpty ? null : () => _play(ref, playlist),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: () => ref.read(playlistProvider.notifier).delete(playlist.id),
-                ),
-              ],
+        title: const Text('Playlists'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.palette_outlined),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ThemePickerScreen()),
             ),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          ListTile(
+            leading: CircleAvatar(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: const Icon(Icons.favorite, color: Colors.white),
+            ),
+            title: const Text('Favorites'),
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => PlaylistDetailScreen(playlist: playlist)),
+              MaterialPageRoute(builder: (context) => const FavoritesScreen()),
             ),
-          );
-        },
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: playlists.isEmpty
+                ? const Center(child: Text('No playlists yet — tap + to create one'))
+                : ListView.builder(
+                    itemCount: playlists.length,
+                    itemBuilder: (context, index) {
+                      final playlist = playlists[index];
+                      return ListTile(
+                        leading: const Icon(Icons.playlist_play),
+                        title: Text(playlist.name),
+                        subtitle: Text('${playlist.trackIds.length} tracks'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PlaylistDetailScreen(playlist: playlist),
+                          ),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.play_arrow),
+                          onPressed: () => _play(ref, playlist),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _createPlaylist(context, ref),
@@ -63,7 +76,6 @@ class PlaylistScreen extends ConsumerWidget {
       ),
     );
   }
-
 
   Future<void> _createPlaylist(BuildContext context, WidgetRef ref) async {
     final controller = TextEditingController();
@@ -93,6 +105,7 @@ class PlaylistScreen extends ConsumerWidget {
       await ref.read(playlistProvider.notifier).create(name);
     }
   }
+
   void _play(WidgetRef ref, Playlist playlist) {
     final library = ref.read(trackLibraryProvider);
     final byId = {for (final t in library) t.id: t};

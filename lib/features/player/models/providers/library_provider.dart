@@ -14,6 +14,23 @@ class TrackLibraryNotifier extends StateNotifier<List<Track>> {
   final TrackLibraryService _service;
 
   TrackLibraryNotifier(this._service) : super([]) {
+    Future<void> toggleFavorite(String trackId) async {
+      final index = state.indexWhere((t) => t.id == trackId);
+      if (index == -1) return;
+
+      final track = state[index];
+      final newFavorite = !track.isFavorite;
+
+
+      final existing = HiveBoxes.tracksBox.get(trackId);
+      final playCount = existing?['playCount'] as int? ?? 0;
+      await HiveBoxes.tracksBox.put(trackId, {'playCount': playCount, 'isFavorite': newFavorite});
+
+      final updated = track.copyWith(isFavorite: newFavorite);
+      state = [
+        for (final t in state) if (t.id == trackId) updated else t,
+      ];
+    }
     _scan();
   }
 
@@ -32,6 +49,22 @@ class TrackLibraryNotifier extends StateNotifier<List<Track>> {
         isFavorite: extras?['isFavorite'] as bool? ?? false,
       );
     }).toList();
+  }
+  Future<void> toggleFavorite(String trackId) async {
+    final index = state.indexWhere((t) => t.id == trackId);
+    if (index == -1) return;
+
+    final track = state[index];
+    final newFavorite = !track.isFavorite;
+
+    final existing = HiveBoxes.tracksBox.get(trackId);
+    final playCount = existing?['playCount'] as int? ?? 0;
+    await HiveBoxes.tracksBox.put(trackId, {'playCount': playCount, 'isFavorite': newFavorite});
+
+    final updated = track.copyWith(isFavorite: newFavorite);
+    state = [
+      for (final t in state) if (t.id == trackId) updated else t,
+    ];
   }
 
   Future<void> refresh() => _scan();

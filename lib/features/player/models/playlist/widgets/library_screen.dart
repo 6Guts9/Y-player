@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/sorting.dart';
 import 'playlist_screen_details.dart';
 import '../../providers/library_provider.dart';
 import '../../providers/player_provider.dart';
@@ -9,13 +10,45 @@ import '../providers/playlist_provider.dart';
 
 class LibraryScreen extends ConsumerWidget {
   const LibraryScreen({super.key});
-
+  List<Track> sortTracks(List<Track> tracks, LibrarySortOption option) {
+    final sorted = [...tracks];
+    switch (option) {
+      case LibrarySortOption.dateAddedDesc:
+        sorted.sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
+      case LibrarySortOption.dateAddedAsc:
+        sorted.sort((a, b) => a.dateAdded.compareTo(b.dateAdded));
+      case LibrarySortOption.titleAsc:
+        sorted.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+      case LibrarySortOption.titleDesc:
+        sorted.sort((a, b) => b.title.toLowerCase().compareTo(a.title.toLowerCase()));
+      case LibrarySortOption.durationAsc:
+        sorted.sort((a, b) => a.duration.compareTo(b.duration));
+      case LibrarySortOption.durationDesc:
+        sorted.sort((a, b) => b.duration.compareTo(a.duration));
+    }
+    return sorted;
+  }
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tracks = ref.watch(trackLibraryProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Library')),
+      appBar: AppBar(title: const Text('Library'),
+      actions: [
+        PopupMenuButton<LibrarySortOption>(
+          icon: const Icon(Icons.sort),
+          onSelected: (option) => ref.read(librarySortProvider.notifier).setOption(option),
+          itemBuilder: (context) => const [
+            PopupMenuItem(value: LibrarySortOption.dateAddedDesc, child: Text('Date added (newest)')),
+            PopupMenuItem(value: LibrarySortOption.dateAddedAsc, child: Text('Date added (oldest)')),
+            PopupMenuItem(value: LibrarySortOption.titleAsc, child: Text('Title (A–Z)')),
+            PopupMenuItem(value: LibrarySortOption.titleDesc, child: Text('Title (Z–A)')),
+            PopupMenuItem(value: LibrarySortOption.durationAsc, child: Text('Duration (shortest)')),
+            PopupMenuItem(value: LibrarySortOption.durationDesc, child: Text('Duration (longest)')),
+          ],
+        ),
+      ],
+      ),
       body: tracks.isEmpty
           ? const Center(child: Text('No songs found — pull down to refresh'))
           : RefreshIndicator(
@@ -23,7 +56,11 @@ class LibraryScreen extends ConsumerWidget {
         child: ListView.builder(
           itemCount: tracks.length,
           itemBuilder: (context, index) {
+            final rawTracks = ref.watch(trackLibraryProvider);
+            final sortOption = ref.watch(librarySortProvider);
+            final tracks = sortTracks(rawTracks, sortOption);
             final track = tracks[index];
+
             return ListTile(
               leading: const CircleAvatar(child: Icon(Icons.music_note)),
               title: Text(track.title, maxLines: 1, overflow: TextOverflow.ellipsis),
