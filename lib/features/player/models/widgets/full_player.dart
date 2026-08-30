@@ -82,6 +82,7 @@ class _ArtworkWidget extends StatelessWidget {
       artworkBorder: BorderRadius.circular(12),
       size: 1000,
       quality: 100,
+      keepOldArtwork: true,
       nullArtworkWidget: Container(
         width: 220,
         height: 220,
