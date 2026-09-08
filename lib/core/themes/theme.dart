@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 enum AppThemePreset { minimalist, pixelArt, artDeco ,aurora, ascii, cybersigilism  }
@@ -37,6 +38,18 @@ class AppTheme {
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
+        centerTitle: false,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.primaryContainer,
+        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+      ),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
       ),
     );
   }
@@ -55,14 +68,18 @@ class AppTheme {
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
+        centerTitle: false,
       ),
       cardTheme: const CardThemeData(
-        shape: RoundedRectangleBorder(), // no radius specified = sharp square corners
+        shape: RoundedRectangleBorder(),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           shape: const RoundedRectangleBorder(),
         ),
+      ),
+      navigationBarTheme: const NavigationBarThemeData(
+        indicatorShape: RoundedRectangleBorder(),
       ),
     );
   }
@@ -140,10 +157,15 @@ class AppTheme {
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
+        centerTitle: true,
       ),
       cardTheme: CardThemeData(
         color: colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.secondary.withOpacity(0.3),
       ),
     );
   }

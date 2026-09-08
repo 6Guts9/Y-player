@@ -10,4 +10,5 @@ class TrackLibraryService {
   Future<List<SongModel>> scanLibrary() {
     return _query.querySongs();
   }
+  Future<void> scanMedia(String path) => _query.scanMedia(path);
 }

@@ -118,6 +118,12 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
 
   AudioSourceHandler() {
     _player.playbackEventStream.listen(_broadcastState);
+    
+    // Explicitly listen to position updates to refresh Flutter UI progress bars
+    _player.positionStream.listen((position) {
+      playbackState.add(playbackState.value.copyWith(updatePosition: position));
+    });
+
     _player.currentIndexStream.listen((index) {
       if (index != null && index != _lastIndex) {
         _lastIndex = index;

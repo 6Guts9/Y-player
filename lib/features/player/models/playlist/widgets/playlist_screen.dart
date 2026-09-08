@@ -50,19 +50,44 @@ class PlaylistScreen extends ConsumerWidget {
                     itemCount: playlists.length,
                     itemBuilder: (context, index) {
                       final playlist = playlists[index];
-                      return ListTile(
-                        leading: const Icon(Icons.playlist_play),
-                        title: Text(playlist.name),
-                        subtitle: Text('${playlist.trackIds.length} tracks'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PlaylistDetailScreen(playlist: playlist),
+                      return TweenAnimationBuilder<double>(
+                        duration: Duration(milliseconds: 300 + (index % 10 * 50)),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 30 * (1 - value)),
+                            child: Opacity(
+                              opacity: value,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: ListTile(
+                          leading: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.playlist_play,
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            ),
                           ),
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.play_arrow),
-                          onPressed: () => _play(ref, playlist),
+                          title: Text(playlist.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text('${playlist.trackIds.length} tracks'),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PlaylistDetailScreen(playlist: playlist),
+                            ),
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.play_arrow),
+                            onPressed: () => _play(ref, playlist),
+                          ),
                         ),
                       );
                     },

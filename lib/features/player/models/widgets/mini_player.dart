@@ -1,5 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:on_audio_query/on_audio_query.dart';
 
 import '../providers/player_provider.dart';
 
@@ -11,51 +13,79 @@ class MiniPlayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Only watch currentTrack for the metadata
     final track = ref.watch(playerProvider.select((s) => s.currentTrack));
 
     if (track == null) return const SizedBox.shrink();
 
-    return Material(
-      elevation: 8,
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: InkWell(
-        onTap: () => showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          builder: (context) => const FullPlayer(),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const BarPlayer(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 4, 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(track.title,
-                              maxLines: 1, overflow: TextOverflow.ellipsis),
-                          Text(
-                            track.artist,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const _MiniControls(),
-                  ],
-                ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Material(
+            elevation: 8,
+            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.7),
+            child: InkWell(
+              onTap: () => showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const FullPlayer(),
               ),
-            ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const BarPlayer(),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 4, 4, 8),
+                    child: Row(
+                      children: [
+                        Hero(
+                          tag: 'artwork_${track.id}',
+                          child: QueryArtworkWidget(
+                            id: int.parse(track.id),
+                            type: ArtworkType.AUDIO,
+                            artworkWidth: 40,
+                            artworkHeight: 40,
+                            artworkBorder: BorderRadius.circular(8),
+                            nullArtworkWidget: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.music_note, size: 20),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(track.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Text(
+                                track.artist,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const _MiniControls(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
