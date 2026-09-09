@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../../core/themes/theme_provider.dart';
+import '../../../../../core/themes/wallpaper.dart';
 import 'favorites_screen.dart';
 import 'playlist_screen_details.dart';
 import '../../../../../core/themes/theme_picker_screen.dart';
@@ -15,8 +17,11 @@ class PlaylistScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final playlists = ref.watch(playlistProvider);
+    final wallpaperOn = ref.watch(wallpaperEnabledProvider);
+    final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themeProvider)) != null;
 
     return Scaffold(
+      backgroundColor: hasWallpaper ? Colors.transparent : null,
       appBar: AppBar(
         title: const Text('Playlists'),
         actions: [

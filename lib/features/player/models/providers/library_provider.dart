@@ -31,7 +31,7 @@ await file.delete();
 await _service.scanMedia(track.uri);
 } catch (e) {
 if (e is PathNotFoundException || e.toString().contains('no such file')) {
-// It's a ghost file! Clean it up from the database and remove from UI.
+//  ghost file Clean it up from the database and remove from UI.
 await _service.scanMedia(track.uri);
 } else {
 // Real error (Permission denied, etc.)
@@ -45,21 +45,7 @@ survivors.add(track);
   }
   TrackLibraryNotifier(this._service) : super([]) {
     Future<void> toggleFavorite(String trackId) async {
-      final index = state.indexWhere((t) => t.id == trackId);
-      if (index == -1) return;
 
-      final track = state[index];
-      final newFavorite = !track.isFavorite;
-
-
-      final existing = HiveBoxes.tracksBox.get(trackId);
-      final playCount = existing?['playCount'] as int? ?? 0;
-      await HiveBoxes.tracksBox.put(trackId, {'playCount': playCount, 'isFavorite': newFavorite});
-
-      final updated = track.copyWith(isFavorite: newFavorite);
-      state = [
-        for (final t in state) if (t.id == trackId) updated else t,
-      ];
     }
     _scan();
   }

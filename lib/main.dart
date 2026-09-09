@@ -18,6 +18,7 @@ Future<void> main() async {
       androidNotificationChannelId: 'com.example.y_player.audio',
       androidNotificationChannelName: 'Playback',
       androidNotificationOngoing: true,
+      androidStopForegroundOnPause: true,
     ),
   );
 

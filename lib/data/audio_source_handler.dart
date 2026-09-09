@@ -94,6 +94,46 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
         artUri: _artworkCache[track.id],
       );
   @override
+  Future<void> onMethodCall(String method, dynamic arguments) async {
+  }
+
+  int _clickCount = 0;
+  DateTime? _lastClickTime;
+
+  @override
+  Future<void> click([MediaButton button = MediaButton.media]) async {
+    final now = DateTime.now();
+    if (_lastClickTime != null && now.difference(_lastClickTime!) < const Duration(milliseconds: 500)) {
+      _clickCount++;
+    } else {
+      _clickCount = 1;
+    }
+    _lastClickTime = now;
+
+    // Delay a bit to wait more clicks
+    await Future.delayed(const Duration(milliseconds: 500));
+
+
+    if (DateTime.now().difference(_lastClickTime!) >= const Duration(milliseconds: 500)) {
+      if (_clickCount == 1) {
+        // Single click: Play/Pause
+        if (_player.playing) {
+          await pause();
+        } else {
+          await play();
+        }
+      } else if (_clickCount == 2) {
+        // Double click: Next
+        await skipToNext();
+      } else if (_clickCount >= 3) {
+        // Triple click: Previous
+        await skipToPrevious();
+      }
+      _clickCount = 0;
+    }
+  }
+
+  @override
   Future<void> play() => _player.play();
 
   @override
@@ -119,7 +159,6 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
   AudioSourceHandler() {
     _player.playbackEventStream.listen(_broadcastState);
     
-    // Explicitly listen to position updates to refresh Flutter UI progress bars
     _player.positionStream.listen((position) {
       playbackState.add(playbackState.value.copyWith(updatePosition: position));
     });

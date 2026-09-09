@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
+import '../../../../../core/themes/theme_provider.dart';
+import '../../../../../core/themes/wallpaper.dart';
 import '../models/playlist.dart';
 import '../providers/playlist_provider.dart';
 import '../../providers/library_provider.dart';
@@ -24,8 +26,10 @@ class PlaylistDetailScreen extends ConsumerWidget {
     final library = ref.watch(trackLibraryProvider);
     final byId = {for (final t in library) t.id: t};
     final tracks = current.trackIds.map((id) => byId[id]).whereType<Track>().toList();
-
+    final wallpaperOn = ref.watch(wallpaperEnabledProvider);
+    final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themeProvider)) != null;
     return Scaffold(
+      backgroundColor: hasWallpaper ? Colors.transparent : null,
       appBar: AppBar(title: Text(current.name)),
       body: tracks.isEmpty
           ? const Center(child: Text('No tracks yet — add some from the Library tab'))

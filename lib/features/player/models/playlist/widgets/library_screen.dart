@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:on_audio_query/on_audio_query.dart';
+import 'package:y_player/core/themes/wallpaper.dart';
+import '../../../../../core/themes/theme_provider.dart';
 import '../../providers/sorting.dart';
 import '../../providers/library_provider.dart';
 import '../../providers/player_provider.dart';
@@ -68,10 +70,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     }).toList();
 
     final tracks = sortTracks(filteredTracks, sortOption);
-
+final wallpaperOn = ref.watch(wallpaperEnabledProvider);
+final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themeProvider)) != null;
     return DefaultTabController(
       length: 3,
       child: Scaffold(
+        backgroundColor: hasWallpaper ? Colors.transparent : null ,
         appBar: AppBar(
           title: _buildAppBarTitle(),
           leading: _buildAppBarLeading(),
@@ -81,7 +85,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(25),
               ),
               child: TabBar(

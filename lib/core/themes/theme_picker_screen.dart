@@ -10,21 +10,31 @@ class ThemePickerScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(themeProvider);
+    final wallpaperOn = ref.watch(wallpaperEnabledProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Theme')),
       body: ListView(
-        children: AppThemePreset.values.map((preset) {
-          final previewTheme = AppTheme.themeFor(preset);
-          final isSelected = preset == current;
+        children: [
+          SwitchListTile(
+            title: const Text('Themed wallpaper'),
+            subtitle: const Text('Decorative background matching your theme'),
+            value: wallpaperOn,
+            onChanged: (_) => ref.read(wallpaperEnabledProvider.notifier).toggle(),
+          ),
+          const Divider(),
+          ...AppThemePreset.values.map((preset) {
+            final previewTheme = AppTheme.themeFor(preset);
+            final isSelected = preset == current;
 
-          return ListTile(
-            leading: CircleAvatar(backgroundColor: previewTheme.colorScheme.primary),
-            title: Text(_label(preset)),
-            trailing: isSelected ? const Icon(Icons.check) : null,
-            onTap: () => ref.read(themeProvider.notifier).setPreset(preset),
-          );
-        }).toList(),
+            return ListTile(
+              leading: CircleAvatar(backgroundColor: previewTheme.colorScheme.primary),
+              title: Text(_label(preset)),
+              trailing: isSelected ? const Icon(Icons.check) : null,
+              onTap: () => ref.read(themeProvider.notifier).setPreset(preset),
+            );
+          }),
+        ],
       ),
     );
   }

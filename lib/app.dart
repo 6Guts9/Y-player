@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/themes/theme.dart';
 import 'core/themes/theme_provider.dart';
+import 'core/themes/wallpaper.dart';
 import 'features/player/models/playlist/widgets/library_screen.dart';
 import 'features/player/models/playlist/widgets/playlist_screen.dart';
 import 'features/player/models/widgets/mini_player.dart';
@@ -21,27 +22,33 @@ class MyApp extends ConsumerWidget {
   }
 }
 
-class _Shell extends StatefulWidget {
-  const _Shell();
+class _Shell extends ConsumerStatefulWidget {
+  const _Shell({super.key});
 
   @override
-  State<_Shell> createState() => _ShellState();
+  ConsumerState<_Shell> createState() => _ShellState();
 }
 
-class _ShellState extends State<_Shell> {
+class _ShellState extends ConsumerState<_Shell> {
   int _index = 0;
-
   static const _screens = [LibraryScreen(), PlaylistScreen()];
 
   @override
   Widget build(BuildContext context) {
+    final preset = ref.watch(themeProvider);
+    final wallpaperOn = ref.watch(wallpaperEnabledProvider);
+    final wallpaper = wallpaperOn ? AppWallpaper.wallpaperFor(preset) : null;
+
     return Scaffold(
-      body: _screens[_index],
+      body: Stack(
+        children: [
+          if (wallpaper != null) Positioned.fill(child: wallpaper),
+          _screens[_index],
+        ],
+      ),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          const MiniPlayer(),
-          NavigationBar(
+        children: [const MiniPlayer(), NavigationBar(
             selectedIndex: _index,
             onDestinationSelected: (i) => setState(() => _index = i),
             destinations: const [
