@@ -11,7 +11,7 @@
     <!-- Android 13 or greater -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
     <application
-        android:label="y_player"
+        android:label="Y player"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:requestLegacyExternalStorage="true">

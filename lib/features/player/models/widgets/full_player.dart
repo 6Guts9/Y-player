@@ -25,77 +25,80 @@ class FullPlayer extends ConsumerWidget {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 24),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.4),
-                  borderRadius: BorderRadius.circular(2),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              track == null
-                  ? _artworkPlaceholder(context)
-                  : _ArtworkWidget(trackId: track.id),
-              const SizedBox(height: 30),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: Column(
-                  key: ValueKey(track?.id),
+                const SizedBox(height: 24),
+                track == null
+                    ? _artworkPlaceholder(context)
+                    : _ArtworkWidget(trackId: track.id),
+                const SizedBox(height: 24),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Column(
+                    key: ValueKey(track?.id),
+                    children: [
+                      Text(
+                        track?.title ?? 'Nothing playing',
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        track?.artist ?? '',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Text(
-                      track?.title ?? 'Nothing playing',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    IconButton(
+                      icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
+                      color: isFavorite ? Colors.red : null,
+                      iconSize: 32,
+                      onPressed: track == null
+                          ? null
+                          : () => ref.read(trackLibraryProvider.notifier).toggleFavorite(track.id),
                     ),
-                    Text(
-                      track?.artist ?? '',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    IconButton(
+                      icon: const Icon(Icons.info_outline),
+                      onPressed: track == null ? null : () => _showTrackInfo(context, track),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.graphic_eq_outlined),
+                      onPressed: () => track == null
+                          ? null
+                          : _showEqualizer(context),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  IconButton(
-                    icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
-                    color: isFavorite ? Colors.red : null,
-                    iconSize: 32,
-                    onPressed: track == null
-                        ? null
-                        : () => ref.read(trackLibraryProvider.notifier).toggleFavorite(track.id),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.info_outline),
-                    onPressed: track == null ? null : () => _showTrackInfo(context, track),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.graphic_eq_outlined),
-                    onPressed: () => track == null
-                        ? null
-                        : _showEqualizer(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const BarPlayer(showLabels: true),
-              const SizedBox(height: 16),
-              const _PlayerControls(),
-              const SizedBox(height: 24),
-            ],
+                const SizedBox(height: 12),
+                const BarPlayer(showLabels: true),
+                const SizedBox(height: 12),
+                const _PlayerControls(),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
@@ -135,7 +138,7 @@ class FullPlayer extends ConsumerWidget {
             _InfoRow('Play count', track.playCount.toString()),
             if (sizeBytes != null)
               _InfoRow('File size', '${(sizeBytes / (1024 * 1024)).toStringAsFixed(2)} MB'),
-            _InfoRow('File path', track.uri),
+
           ],
         ),
         actions: [

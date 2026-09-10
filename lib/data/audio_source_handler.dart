@@ -54,15 +54,26 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
     ));
   }
   Future<void> playTrack(Track track) async {
+    _lastIndex = null; // Reset to force metadata update
     _queueItems = [_toMediaItem(track)];
     queue.add(_queueItems);
+    
+    // Prefetch artwork for the single track
+    await _resolveArtworkUri(track.id);
+    
     await _player.setAudioSource(_toAudioSource(track, _queueItems.first));
     await _player.play();
   }
 
   Future<void> loadQueue(List<Track> tracks, {int initialIndex = 0}) async {
+    _lastIndex = null; // Reset to force metadata update
     _queueItems = tracks.map(_toMediaItem).toList();
     queue.add(_queueItems);
+
+    // Prioritize current track artwork
+    if (tracks.isNotEmpty) {
+      await _resolveArtworkUri(tracks[initialIndex].id);
+    }
 
     final sources = [
       for (var i = 0; i < tracks.length; i++)
@@ -74,6 +85,9 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
       initialIndex: initialIndex,
     );
     await _player.play();
+
+    // Prefetch others
+    _prefetchQueueArtworks(tracks, initialIndex);
   }
   Future<void> setShuffleEnabled(bool enabled) =>
       _player.setShuffleModeEnabled(enabled);
@@ -158,6 +172,8 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
   }
 
   int? _lastIndex;
+  String? _lastPushedId;
+  Uri? _lastPushedArtUri;
 
   AudioSourceHandler() {
     _audioPipeline = AudioPipeline(androidAudioEffects: [_equalizer]);
@@ -177,23 +193,46 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
     });
   }
 
-  // Optimized metadata update to prevent flicker
+  // Final fix for looping animation and flickering artwork
   Future<void> _updateMetadata(int index) async {
     if (index < 0 || index >= _queueItems.length) return;
 
-    final base = _queueItems[index];
+    final baseItem = _queueItems[index];
+    
+    // Always use cached artwork if available to avoid multiple updates
+    final cachedArtUri = _artworkCache[baseItem.id];
+    final targetItem = cachedArtUri != null 
+        ? baseItem.copyWith(artUri: cachedArtUri) 
+        : baseItem;
 
-    if (_artworkCache.containsKey(base.id)) {
-      mediaItem.add(base.copyWith(artUri: _artworkCache[base.id]));
+    // AVOID REDUNDANT UPDATES: Only push if the track ID or Artwork has actually changed
+    if (_lastPushedId == targetItem.id && _lastPushedArtUri == targetItem.artUri) {
       return;
     }
 
+    _lastPushedId = targetItem.id;
+    _lastPushedArtUri = targetItem.artUri;
+    mediaItem.add(targetItem);
 
-    mediaItem.add(base);
-    final artUri = await _resolveArtworkUri(base.id);
+    // If artwork wasn't in cache, fetch it now
+    if (targetItem.artUri == null) {
+      final newArtUri = await _resolveArtworkUri(targetItem.id);
+      
+      // Only push the updated item if we are still on the SAME track
+      if (_lastIndex == index && newArtUri != null && _lastPushedArtUri != newArtUri) {
+        _lastPushedArtUri = newArtUri;
+        mediaItem.add(targetItem.copyWith(artUri: newArtUri));
+      }
+    }
+  }
 
-    if (_lastIndex == index) {
-      mediaItem.add(artUri != null ? base.copyWith(artUri: artUri) : base);
+  void _prefetchQueueArtworks(List<Track> tracks, int currentIndex) async {
+    // Prefetch nearby tracks first (next 5) to ensure smooth transitions
+    for (var i = 1; i <= 5; i++) {
+      final target = (currentIndex + i) % tracks.length;
+      if (!_artworkCache.containsKey(tracks[target].id)) {
+        await _resolveArtworkUri(tracks[target].id);
+      }
     }
   }
 

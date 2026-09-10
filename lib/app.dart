@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'core/services/update_service.dart';
 import 'core/themes/theme.dart';
 import 'core/themes/theme_provider.dart';
 import 'core/themes/wallpaper.dart';
+
+import 'package:url_launcher/url_launcher.dart';
 import 'features/player/models/playlist/widgets/library_screen.dart';
 import 'features/player/models/playlist/widgets/playlist_screen.dart';
 import 'features/player/models/widgets/mini_player.dart';
@@ -20,8 +22,21 @@ class MyApp extends ConsumerWidget {
       home: const _Shell(),
     );
   }
-}
 
+
+}
+void _showUpdateNotification(BuildContext context, GitHubRelease release) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('New version available: ${release.version}'),
+      duration: const Duration(seconds: 10),
+      action: SnackBarAction(
+        label: 'Update',
+        onPressed: () => launchUrl(Uri.parse(release.releaseUrl)),
+      ),
+    ),
+  );
+}
 class _Shell extends ConsumerStatefulWidget {
   const _Shell({super.key});
 
@@ -35,6 +50,14 @@ class _ShellState extends ConsumerState<_Shell> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(updateCheckProvider, (previous, next) {
+      next.whenData((release) {
+        if (release != null && mounted) {
+          _showUpdateNotification(context, release);
+        }
+      });
+    });
+
     final preset = ref.watch(themeProvider);
     final wallpaperOn = ref.watch(wallpaperEnabledProvider);
     final wallpaper = wallpaperOn ? AppWallpaper.wallpaperFor(preset) : null;
