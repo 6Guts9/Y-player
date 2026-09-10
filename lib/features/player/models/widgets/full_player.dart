@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide RepeatMode;
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:on_audio_query/on_audio_query.dart';
+import '../providers/equalizer.dart';
 import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
 import '../player_status.dart';
@@ -67,7 +68,7 @@ class FullPlayer extends ConsumerWidget {
               ),
               const SizedBox(height: 20),
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   IconButton(
                     icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
@@ -80,6 +81,12 @@ class FullPlayer extends ConsumerWidget {
                   IconButton(
                     icon: const Icon(Icons.info_outline),
                     onPressed: track == null ? null : () => _showTrackInfo(context, track),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.graphic_eq_outlined),
+                    onPressed: () => track == null
+                        ? null
+                        : _showEqualizer(context),
                   ),
                 ],
               ),
@@ -134,6 +141,30 @@ class FullPlayer extends ConsumerWidget {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
         ],
+      ),
+    );
+  }
+
+  void _showEqualizer(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: const SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              EqualizerSection(),
+              SizedBox(height: 24),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -256,6 +287,79 @@ class _PlayerControls extends ConsumerWidget {
               : Theme.of(context).colorScheme.primary,
           onPressed: notifier.cycleRepeatMode,
         ),
+      ],
+    );
+  }
+}
+class EqualizerSection extends ConsumerWidget {
+  const EqualizerSection({super.key});
+
+  String _formatFrequency(double hz) {
+    if (hz >= 1000) {
+      final khz = hz / 1000;
+      return '${khz.toStringAsFixed(khz.truncateToDouble() == khz ? 0 : 1)}kHz';
+    }
+    return '${hz.toStringAsFixed(0)}Hz';
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final eq = ref.watch(equalizerProvider);
+    final notifier = ref.read(equalizerProvider.notifier);
+    final paramsAsync = ref.watch(equalizerParamsProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Equalizer', style: TextStyle(fontWeight: FontWeight.bold)),
+            Switch(
+              value: eq.enabled,
+              onChanged: notifier.toggleEnabled,
+            ),
+          ],
+        ),
+        if (eq.enabled)
+          paramsAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (err, stack) => Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Couldn\'t load equalizer: $err'),
+            ),
+            data: (params) {
+              final minGain = params.minDecibels;
+              final maxGain = params.maxDecibels;
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(eq.bandGains.length, (i) {
+                  final band = params.bands[i];
+                  return Column(
+                    children: [
+                      RotatedBox(
+                        quarterTurns: 3,
+                        child: Slider(
+                          value: eq.bandGains[i].clamp(minGain, maxGain),
+                          min: minGain,
+                          max: maxGain,
+                          onChanged: (v) => notifier.setBandGain(i, v),
+                        ),
+                      ),
+                      Text(
+                        _formatFrequency(band.centerFrequency),
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                    ],
+                  );
+                }),
+              );
+            },
+          ),
       ],
     );
   }

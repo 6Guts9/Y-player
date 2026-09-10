@@ -1,12 +1,15 @@
 
 import 'package:hive_flutter/hive_flutter.dart';
+import '../../features/player/models/providers/equalizer.dart';
 
 class HiveBoxes {
   HiveBoxes._();
   static const String tracks ='track_box';
   static const String playlists = 'playlist_box';
+  static const String equalizer = 'equalizer_box';
   static late Box<Map> tracksBox;
   static late Box<Map> playlistsBox;
+  static late Box<EqualizerSettings> equalizerBox;
   static const String settings = 'settings_box';
   static late Box settingsBox;
 ///late is a kind of promise to the compiler that the given value is empty but it will be set
@@ -19,8 +22,11 @@ class HiveBoxes {
     if(_initialized) return;
     await Hive.initFlutter();
 
+    Hive.registerAdapter(EqualizerSettingsAdapter());
+
     tracksBox = await Hive.openBox<Map>(tracks);
     playlistsBox = await Hive.openBox<Map>(playlists);
+    equalizerBox = await Hive.openBox<EqualizerSettings>(equalizer);
     settingsBox = await Hive.openBox(settings);
 
     _initialized = true;

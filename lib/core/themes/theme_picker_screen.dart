@@ -17,8 +17,9 @@ class ThemePickerScreen extends ConsumerWidget {
       body: ListView(
         children: [
           SwitchListTile(
-            title: const Text('Themed wallpaper'),
-            subtitle: const Text('Decorative background matching your theme'),
+            title:  const Text('Themed wallpaper',style: TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: const Text('Decorative background matching your theme \n \n (only pixel art and aurora are supported)'),
+            secondary: const Icon(Icons.wallpaper),
             value: wallpaperOn,
             onChanged: (_) => ref.read(wallpaperEnabledProvider.notifier).toggle(),
           ),

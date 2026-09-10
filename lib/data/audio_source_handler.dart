@@ -6,10 +6,13 @@ import 'package:path_provider/path_provider.dart';
 import '../features/player/models/track.dart';
 
 class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
-
-  final AudioPlayer _player = AudioPlayer();
   final OnAudioQuery _artworkQuery = OnAudioQuery();
   final Map<String, Uri> _artworkCache = {};
+  
+  final AndroidEqualizer _equalizer = AndroidEqualizer();
+  late final AudioPipeline _audioPipeline;
+  late final AudioPlayer _player;
+
   List<MediaItem> _queueItems = [];
   Future<Uri?> _resolveArtworkUri(String trackId) async {
     if (_artworkCache.containsKey(trackId)) return _artworkCache[trackId];
@@ -157,6 +160,9 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
   int? _lastIndex;
 
   AudioSourceHandler() {
+    _audioPipeline = AudioPipeline(androidAudioEffects: [_equalizer]);
+    _player = AudioPlayer(audioPipeline: _audioPipeline);
+
     _player.playbackEventStream.listen(_broadcastState);
     
     _player.positionStream.listen((position) {
@@ -191,6 +197,18 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
     }
   }
 
+  Future<AndroidEqualizerParameters> getEqualizerParams() {
+    return _equalizer.parameters;
+  }
+
+  Future<void> setEqualizerEnabled(bool enabled) {
+    return _equalizer.setEnabled(enabled);
+  }
+
+  Future<void> setBandGain(int bandIndex, double gain) async {
+    final params = await _equalizer.parameters;
+    await params.bands[bandIndex].setGain(gain);
+  }
 ///just_audio doesn't take a Track it takes an AudioSource, built from a Uri
 ///and separately,audio_service wants a MediaItem like title/artist..etc to actually display in the notification
 ///so loading one track means building both from our one Track
