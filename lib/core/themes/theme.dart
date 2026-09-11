@@ -59,11 +59,32 @@ class AppTheme {
       brightness: Brightness.dark,
     );
 
+    final baseTextTheme = GoogleFonts.pressStart2pTextTheme(ThemeData.dark().textTheme);
+    
+    // Scaling down the font sizes because PressStart2P is naturally very large
+    final scaledTextTheme = baseTextTheme.copyWith(
+      displayLarge: baseTextTheme.displayLarge?.copyWith(fontSize: 32),
+      displayMedium: baseTextTheme.displayMedium?.copyWith(fontSize: 28),
+      displaySmall: baseTextTheme.displaySmall?.copyWith(fontSize: 24),
+      headlineLarge: baseTextTheme.headlineLarge?.copyWith(fontSize: 20),
+      headlineMedium: baseTextTheme.headlineMedium?.copyWith(fontSize: 18),
+      headlineSmall: baseTextTheme.headlineSmall?.copyWith(fontSize: 16),
+      titleLarge: baseTextTheme.titleLarge?.copyWith(fontSize: 14),
+      titleMedium: baseTextTheme.titleMedium?.copyWith(fontSize: 12),
+      titleSmall: baseTextTheme.titleSmall?.copyWith(fontSize: 10),
+      bodyLarge: baseTextTheme.bodyLarge?.copyWith(fontSize: 12),
+      bodyMedium: baseTextTheme.bodyMedium?.copyWith(fontSize: 10),
+      bodySmall: baseTextTheme.bodySmall?.copyWith(fontSize: 8),
+      labelLarge: baseTextTheme.labelLarge?.copyWith(fontSize: 10),
+      labelMedium: baseTextTheme.labelMedium?.copyWith(fontSize: 8),
+      labelSmall: baseTextTheme.labelSmall?.copyWith(fontSize: 7),
+    );
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
-      textTheme: GoogleFonts.pressStart2pTextTheme(ThemeData.dark().textTheme),
+      textTheme: scaledTextTheme,
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
@@ -85,14 +106,14 @@ class AppTheme {
   }
   static ThemeData _artDeco() {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFFC9A227), // gold
+      seedColor: const Color(0xFFC9A227),
       brightness: Brightness.dark,
     );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFF0B0B0B), // deliberate near-black
+      scaffoldBackgroundColor: const Color(0xFF0B0B0B),
       textTheme: GoogleFonts.cinzelTextTheme(ThemeData.dark().textTheme),
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,

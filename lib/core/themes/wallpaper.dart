@@ -36,8 +36,10 @@ class _pixelArtWallpaper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF001A12), // dark background, matches the theme's palette
+
+      color: const Color(0xFF001A12),
       child: CustomPaint(
+
         painter: _PixelGridPainter(lineColor: const Color(0xFF00E5A0).withOpacity(0.12)),
         size: Size.infinite,
       ),

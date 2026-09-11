@@ -1,8 +1,10 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:y_player/core/themes/wallpaper.dart';
 import '../../../../../core/themes/theme_provider.dart';
+import '../../providers/scan_provider.dart';
 import '../../providers/sorting.dart';
 import '../../providers/library_provider.dart';
 import '../../providers/player_provider.dart';
@@ -29,6 +31,40 @@ List<Track> sortTracks(List<Track> tracks, LibrarySortOption option) {
   return sorted;
 }
 
+Future<void> _showScanSettings(BuildContext context, WidgetRef ref) async {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Scan scope'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            title: const Text('Full device'),
+            leading: const Icon(Icons.smartphone),
+            onTap: () async {
+              await ref.read(scanScopeProvider.notifier).setFullScan();
+              await ref.read(trackLibraryProvider.notifier).refresh();
+              if (context.mounted) Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            title: const Text('Specific folder'),
+            leading: const Icon(Icons.folder_outlined),
+            onTap: () async {
+              final path = await FilePicker.platform.getDirectoryPath();
+              if (path != null) {
+                await ref.read(scanScopeProvider.notifier).setFolderScan(path);
+                await ref.read(trackLibraryProvider.notifier).refresh();
+              }
+              if (context.mounted) Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
 class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
 
@@ -85,7 +121,7 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(128),
                 borderRadius: BorderRadius.circular(25),
               ),
               child: TabBar(
@@ -96,7 +132,7 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
                   color: Theme.of(context).colorScheme.primary,
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -194,6 +230,10 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
 
     return [
       IconButton(
+        icon: const Icon(Icons.folder_open),
+        onPressed: () => _showScanSettings(context, ref),
+      ),
+      IconButton(
         icon: const Icon(Icons.search),
         onPressed: () => setState(() => _isSearchActive = true),
       ),
@@ -254,7 +294,7 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: selected ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surfaceVariant,
+                          color: selected ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(Icons.music_note),
@@ -266,7 +306,7 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(Icons.check, color: Colors.white),
@@ -392,7 +432,7 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceVariant,
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Icon(Icons.music_note, size: 20),
@@ -425,22 +465,23 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
           TextButton(
             onPressed: () async {
               final count = _selectedIds.length;
+              final messenger = ScaffoldMessenger.of(context);
               final failed = await ref.read(trackLibraryProvider.notifier).deleteTracks(_selectedIds);
               
               if (!mounted) return;
               
               if (failed > 0) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(content: Text('Deleted ${count - failed} tracks. $failed failed.')),
                 );
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(content: Text('Deleted $count tracks')),
                 );
               }
               
               _clearSelection();
-              Navigator.pop(context);
+              if (context.mounted) Navigator.pop(context);
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
