@@ -2,10 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-enum AppThemePreset { minimalist, pixelArt, artDeco ,aurora, ascii, cybersigilism  }
+enum AppThemePreset { minimalist, pixelArt, artDeco, aurora, ascii, cybersigilism }
 
 class AppTheme {
   AppTheme._();
+
+  static TextTheme _withArabic(TextTheme theme, TextStyle arabicStyle) {
+    final fallback = [arabicStyle.fontFamily!];
+    return theme.copyWith(
+      displayLarge: theme.displayLarge?.copyWith(fontFamilyFallback: fallback),
+      displayMedium: theme.displayMedium?.copyWith(fontFamilyFallback: fallback),
+      displaySmall: theme.displaySmall?.copyWith(fontFamilyFallback: fallback),
+      headlineLarge: theme.headlineLarge?.copyWith(fontFamilyFallback: fallback),
+      headlineMedium: theme.headlineMedium?.copyWith(fontFamilyFallback: fallback),
+      headlineSmall: theme.headlineSmall?.copyWith(fontFamilyFallback: fallback),
+      titleLarge: theme.titleLarge?.copyWith(fontFamilyFallback: fallback),
+      titleMedium: theme.titleMedium?.copyWith(fontFamilyFallback: fallback),
+      titleSmall: theme.titleSmall?.copyWith(fontFamilyFallback: fallback),
+      bodyLarge: theme.bodyLarge?.copyWith(fontFamilyFallback: fallback),
+      bodyMedium: theme.bodyMedium?.copyWith(fontFamilyFallback: fallback),
+      bodySmall: theme.bodySmall?.copyWith(fontFamilyFallback: fallback),
+      labelLarge: theme.labelLarge?.copyWith(fontFamilyFallback: fallback),
+      labelMedium: theme.labelMedium?.copyWith(fontFamilyFallback: fallback),
+      labelSmall: theme.labelSmall?.copyWith(fontFamilyFallback: fallback),
+    );
+  }
 
   static ThemeData themeFor(AppThemePreset preset) {
     switch (preset) {
@@ -16,10 +37,8 @@ class AppTheme {
       case AppThemePreset.artDeco:
         return _artDeco();
       case AppThemePreset.aurora:
-
         return _aurora();
       case AppThemePreset.ascii:
-
         return _ascii();
       case AppThemePreset.cybersigilism:
         return _cybersigilism();
@@ -33,7 +52,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
-      textTheme: GoogleFonts.interTextTheme(),
+      textTheme: _withArabic(GoogleFonts.interTextTheme(), GoogleFonts.cairo()),
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
@@ -53,6 +72,7 @@ class AppTheme {
       ),
     );
   }
+
   static ThemeData _pixelArt() {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: const Color(0xFF00E5A0),
@@ -60,22 +80,22 @@ class AppTheme {
     );
 
     final baseTextTheme = GoogleFonts.pressStart2pTextTheme(ThemeData.dark().textTheme);
-    
-    // Scaling down the font sizes because PressStart2P is naturally very large
+
+
     final scaledTextTheme = baseTextTheme.copyWith(
-      displayLarge: baseTextTheme.displayLarge?.copyWith(fontSize: 32),
-      displayMedium: baseTextTheme.displayMedium?.copyWith(fontSize: 28),
-      displaySmall: baseTextTheme.displaySmall?.copyWith(fontSize: 24),
-      headlineLarge: baseTextTheme.headlineLarge?.copyWith(fontSize: 20),
-      headlineMedium: baseTextTheme.headlineMedium?.copyWith(fontSize: 18),
-      headlineSmall: baseTextTheme.headlineSmall?.copyWith(fontSize: 16),
-      titleLarge: baseTextTheme.titleLarge?.copyWith(fontSize: 14),
-      titleMedium: baseTextTheme.titleMedium?.copyWith(fontSize: 12),
-      titleSmall: baseTextTheme.titleSmall?.copyWith(fontSize: 10),
-      bodyLarge: baseTextTheme.bodyLarge?.copyWith(fontSize: 12),
-      bodyMedium: baseTextTheme.bodyMedium?.copyWith(fontSize: 10),
+      displayLarge: baseTextTheme.displayLarge?.copyWith(fontSize: 28),
+      displayMedium: baseTextTheme.displayMedium?.copyWith(fontSize: 24),
+      displaySmall: baseTextTheme.displaySmall?.copyWith(fontSize: 20),
+      headlineLarge: baseTextTheme.headlineLarge?.copyWith(fontSize: 18),
+      headlineMedium: baseTextTheme.headlineMedium?.copyWith(fontSize: 16),
+      headlineSmall: baseTextTheme.headlineSmall?.copyWith(fontSize: 14),
+      titleLarge: baseTextTheme.titleLarge?.copyWith(fontSize: 12),
+      titleMedium: baseTextTheme.titleMedium?.copyWith(fontSize: 10),
+      titleSmall: baseTextTheme.titleSmall?.copyWith(fontSize: 9),
+      bodyLarge: baseTextTheme.bodyLarge?.copyWith(fontSize: 10),
+      bodyMedium: baseTextTheme.bodyMedium?.copyWith(fontSize: 9),
       bodySmall: baseTextTheme.bodySmall?.copyWith(fontSize: 8),
-      labelLarge: baseTextTheme.labelLarge?.copyWith(fontSize: 10),
+      labelLarge: baseTextTheme.labelLarge?.copyWith(fontSize: 9),
       labelMedium: baseTextTheme.labelMedium?.copyWith(fontSize: 8),
       labelSmall: baseTextTheme.labelSmall?.copyWith(fontSize: 7),
     );
@@ -84,7 +104,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
-      textTheme: scaledTextTheme,
+      textTheme: _withArabic(scaledTextTheme, const TextStyle(fontFamily: 'ArPixel')),
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
@@ -104,6 +124,7 @@ class AppTheme {
       ),
     );
   }
+
   static ThemeData _artDeco() {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: const Color(0xFFC9A227),
@@ -114,7 +135,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: const Color(0xFF0B0B0B),
-      textTheme: GoogleFonts.cinzelTextTheme(ThemeData.dark().textTheme),
+      textTheme: _withArabic(GoogleFonts.cinzelTextTheme(ThemeData.dark().textTheme), GoogleFonts.amiri()),
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
@@ -122,6 +143,7 @@ class AppTheme {
       ),
     );
   }
+
   static ThemeData _cybersigilism() {
     final base = GoogleFonts.cormorantTextTheme(ThemeData.dark().textTheme);
     final gothicTitle = GoogleFonts.pirataOne();
@@ -144,7 +166,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
-      textTheme: textTheme,
+      textTheme: _withArabic(textTheme, GoogleFonts.amiri()),
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
@@ -153,12 +175,13 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: colorScheme.surface,
         shape: RoundedRectangleBorder(
-          side: BorderSide(color: colorScheme.onSurface.withOpacity(0.2)),
+          side: BorderSide(color: colorScheme.onSurface.withValues(alpha: 0.2)),
           borderRadius: BorderRadius.zero,
         ),
       ),
     );
   }
+
   static ThemeData _aurora() {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: const Color(0xFF2EE6A8), // aurora green
@@ -173,7 +196,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
-      textTheme: GoogleFonts.orbitronTextTheme(ThemeData.dark().textTheme),
+      textTheme: _withArabic(GoogleFonts.orbitronTextTheme(ThemeData.dark().textTheme), GoogleFonts.cairo()),
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
@@ -190,6 +213,7 @@ class AppTheme {
       ),
     );
   }
+
   static ThemeData _ascii() {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: const Color(0xFF33FF66), // phosphor terminal green
@@ -200,7 +224,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
-      textTheme: GoogleFonts.spaceMonoTextTheme(ThemeData.dark().textTheme),
+      textTheme: _withArabic(GoogleFonts.spaceMonoTextTheme(ThemeData.dark().textTheme), GoogleFonts.cairo()),
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,

@@ -15,8 +15,13 @@ subprojects {
         val androidExtension = extensions.findByType(BaseExtension::class.java)
 
         if (androidExtension != null) {
+            // Fix for AGP 8.0+ strict namespace requirement
             if (androidExtension.namespace == null) {
-                androidExtension.namespace = "dev.flutter.plugins.${project.name.replace("-", "_")}"
+                if (project.name == "on_audio_query_android") {
+                    androidExtension.namespace = "com.lucasjosino.on_audio_query"
+                } else {
+                    androidExtension.namespace = "dev.flutter.plugins.${project.name.replace("-", "_")}"
+                }
             }
             androidExtension.compileSdkVersion(36)
             androidExtension.compileOptions.sourceCompatibility = JavaVersion.VERSION_17

@@ -5,6 +5,7 @@ import 'core/themes/theme.dart';
 import 'core/themes/theme_provider.dart';
 import 'core/themes/wallpaper.dart';
 
+import 'package:ota_update/ota_update.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'features/player/models/playlist/widgets/library_screen.dart';
 import 'features/player/models/playlist/widgets/playlist_screen.dart';
@@ -29,13 +30,106 @@ void _showUpdateNotification(BuildContext context, GitHubRelease release) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text('New version available: ${release.version}'),
-      duration: const Duration(seconds: 10),
+      duration: const Duration(seconds: 15),
       action: SnackBarAction(
         label: 'Update',
-        onPressed: () => launchUrl(Uri.parse(release.releaseUrl)),
+        onPressed: () {
+          if (release.apkUrl != null) {
+            _startInAppUpdate(context, release.apkUrl!);
+          } else {
+            launchUrl(Uri.parse(release.releaseUrl));
+          }
+        },
       ),
     ),
   );
+}
+
+void _startInAppUpdate(BuildContext context, String url) {
+  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+  
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => _UpdateProgressDialog(url: url),
+  );
+}
+
+class _UpdateProgressDialog extends StatefulWidget {
+  final String url;
+  const _UpdateProgressDialog({required this.url});
+
+  @override
+  State<_UpdateProgressDialog> createState() => _UpdateProgressDialogState();
+}
+
+class _UpdateProgressDialogState extends State<_UpdateProgressDialog> {
+  double _progress = 0;
+  String _status = 'Downloading...';
+
+  @override
+  void initState() {
+    super.initState();
+    _startDownload();
+  }
+
+  void _startDownload() {
+    try {
+      OtaUpdate().execute(widget.url, destinationFilename: 'yplayer_update.apk').listen(
+        (OtaEvent event) {
+          if (!mounted) return;
+          
+          setState(() {
+            switch (event.status) {
+              case OtaStatus.DOWNLOADING:
+                _progress = double.tryParse(event.value ?? '0') ?? 0;
+                _status = 'Downloading: ${_progress.toInt()}%';
+              case OtaStatus.INSTALLING:
+                _status = 'Preparing installation...';
+                // Close dialog just before system installer takes over
+                Future.delayed(const Duration(seconds: 1), () {
+                   if (mounted) Navigator.pop(context);
+                });
+              case OtaStatus.INTERNAL_ERROR:
+              case OtaStatus.DOWNLOAD_ERROR:
+                _status = 'Error: ${event.value}';
+                Future.delayed(const Duration(seconds: 3), () {
+                  if (mounted) Navigator.pop(context);
+                });
+              default:
+                _status = 'Status: ${event.status}';
+            }
+          });
+        },
+        onError: (e) {
+          if (mounted) {
+            setState(() => _status = 'Error occurred: $e');
+            Future.delayed(const Duration(seconds: 3), () => Navigator.pop(context));
+          }
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _status = 'Could not start download: $e');
+        Future.delayed(const Duration(seconds: 3), () => Navigator.pop(context));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Updating Y Player'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          LinearProgressIndicator(value: _progress / 100),
+          const SizedBox(height: 16),
+          Text(_status),
+        ],
+      ),
+    );
+  }
 }
 class _Shell extends ConsumerStatefulWidget {
   const _Shell({super.key});
@@ -50,7 +144,9 @@ class _ShellState extends ConsumerState<_Shell> {
 
   @override
   Widget build(BuildContext context) {
+    print('SHELL: build triggered');
     ref.listen(updateCheckProvider, (previous, next) {
+      print('SHELL: update provider emitted state: $next');
       next.whenData((release) {
         if (release != null && mounted) {
           _showUpdateNotification(context, release);

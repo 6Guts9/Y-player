@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/themes/theme_provider.dart';
 import '../../../../../core/themes/wallpaper.dart';
+import '../../../../../core/services/update_service.dart';
 import 'favorites_screen.dart';
 import 'playlist_screen_details.dart';
 import '../../../../../core/themes/theme_picker_screen.dart';
@@ -25,6 +26,21 @@ class PlaylistScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Playlists'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.update),
+            tooltip: 'Check for updates',
+            onPressed: () async {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Checking for updates...'), duration: Duration(seconds: 1)),
+              );
+              final release = await ref.refresh(updateCheckProvider.future);
+              if (context.mounted && release == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Your app is up to date!')),
+                );
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.palette_outlined),
             onPressed: () => Navigator.push(

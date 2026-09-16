@@ -6,18 +6,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class GitHubRelease {
   final String version;
   final String releaseUrl;
+  final String? apkUrl;
   final String description;
 
   GitHubRelease({
     required this.version,
     required this.releaseUrl,
+    this.apkUrl,
     required this.description,
   });
 
   factory GitHubRelease.fromJson(Map<String, dynamic> json) {
+    final assets = json['assets'] as List? ?? [];
+    String? apkUrl;
+    
+    try {
+      final apkAsset = assets.firstWhere(
+        (asset) => asset['name'].toString().toLowerCase().endsWith('.apk'),
+        orElse: () => null,
+      );
+      if (apkAsset != null) {
+        apkUrl = apkAsset['browser_download_url'];
+      }
+    } catch (_) {}
+
     return GitHubRelease(
       version: json['tag_name'] ?? '',
       releaseUrl: json['html_url'] ?? '',
+      apkUrl: apkUrl,
       description: json['body'] ?? '',
     );
   }
@@ -25,11 +41,12 @@ class GitHubRelease {
 
 class UpdateService {
   static const String _repoOwner = '6Guts9';
-  static const String _repoName = 'Y_player';
+  static const String _repoName = 'Y-player';
   static const String _baseUrl = 'https://api.github.com/repos/$_repoOwner/$_repoName/releases/latest';
 
   Future<GitHubRelease?> checkForUpdate() async {
     try {
+      print('UPDATE SERVICE: Requesting $_baseUrl');
       final response = await http.get(
         Uri.parse(_baseUrl),
         headers: {
@@ -38,16 +55,25 @@ class UpdateService {
         },
       ).timeout(const Duration(seconds: 10));
 
+      print('UPDATE SERVICE: Status Code ${response.statusCode}');
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final latestRelease = GitHubRelease.fromJson(data);
         
         final packageInfo = await PackageInfo.fromPlatform();
         final currentVersion = packageInfo.version;
+        
+        print('UPDATE CHECK: Current=$currentVersion, Latest=${latestRelease.version}');
 
         if (_isNewerVersion(latestRelease.version, currentVersion)) {
+          print('UPDATE FOUND!');
           return latestRelease;
+        } else {
+          print('NO UPDATE NEEDED');
         }
+      } else {
+        print('UPDATE SERVICE ERROR: ${response.body}');
       }
     } catch (e) {
       print('Error checking for updates: $e');
