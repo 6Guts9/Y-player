@@ -9,6 +9,7 @@ import '../../providers/sorting.dart';
 import '../../providers/library_provider.dart';
 import '../../providers/player_provider.dart';
 import '../../track.dart';
+import '../models/playlist.dart';
 import '../providers/playlist_provider.dart';
 
 
@@ -206,6 +207,10 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
   List<Widget> _buildAppBarActions() {
     if (_isSelecting) {
       return [
+        IconButton(
+          icon: const Icon(Icons.playlist_add),
+          onPressed: () => _addSelectedToPlaylist(context),
+        ),
         IconButton(
           icon: const Icon(Icons.delete_outline),
           onPressed: () => _confirmDelete(context),
@@ -489,7 +494,44 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
       ),
     );
   }
+  Future<void> _addSelectedToPlaylist(BuildContext context) async {
+    final ids = Set<String>.from(_selectedIds);
+    _clearSelection();
 
+    final playlists = ref.read(playlistProvider);
+    if (playlists.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No playlists yet — create one from the Playlists tab')),
+      );
+      return;
+    }
+
+    final chosen = await showModalBottomSheet<Playlist>(
+      context: context,
+      builder: (context) => ListView(
+        shrinkWrap: true,
+        children: [
+          for (final playlist in playlists)
+            ListTile(
+              title: Text(playlist.name),
+              onTap: () => Navigator.pop(context, playlist),
+            ),
+        ],
+      ),
+    );
+
+    if (chosen == null) return;
+
+    for (final id in ids) {
+      await ref.read(playlistProvider.notifier).addTrack(chosen.id, id);
+    }
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Added ${ids.length} song(s) to ${chosen.name}')),
+      );
+    }
+  }
   void _showAddToPlaylist(BuildContext context, Track track) {
     showModalBottomSheet(
       context: context,

@@ -119,31 +119,36 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
 
   @override
   Future<void> click([MediaButton button = MediaButton.media]) async {
+    // 1. Handle specialized buttons (AirPods/Bluetooth often send these directly)
+    if (button == MediaButton.next) {
+      return skipToNext();
+    } else if (button == MediaButton.previous) {
+      return skipToPrevious();
+    }
+
+    // 2. Handle raw "Media" button multi-clicks (Common for wired earphones)
     final now = DateTime.now();
-    if (_lastClickTime != null && now.difference(_lastClickTime!) < const Duration(milliseconds: 500)) {
+    if (_lastClickTime != null && now.difference(_lastClickTime!) < const Duration(milliseconds: 400)) {
       _clickCount++;
     } else {
       _clickCount = 1;
     }
     _lastClickTime = now;
 
-    // Delay a bit to wait more clicks
-    await Future.delayed(const Duration(milliseconds: 500));
+    // Wait slightly to see if another click is coming
+    await Future.delayed(const Duration(milliseconds: 400));
 
-
-    if (DateTime.now().difference(_lastClickTime!) >= const Duration(milliseconds: 500)) {
+    // If no more clicks happened during the delay, execute the action
+    if (DateTime.now().difference(_lastClickTime!) >= const Duration(milliseconds: 400)) {
       if (_clickCount == 1) {
-        // Single click: Play/Pause
         if (_player.playing) {
           await pause();
         } else {
           await play();
         }
       } else if (_clickCount == 2) {
-        // Double click: Next
         await skipToNext();
       } else if (_clickCount >= 3) {
-        // Triple click: Previous
         await skipToPrevious();
       }
       _clickCount = 0;
