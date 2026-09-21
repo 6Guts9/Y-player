@@ -17,8 +17,12 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
   Future<Uri?> _resolveArtworkUri(String trackId) async {
     if (_artworkCache.containsKey(trackId)) return _artworkCache[trackId];
 
+    // Only attempt to query local artwork if the ID is numeric (local song ID)
+    final id = int.tryParse(trackId);
+    if (id == null) return null;
+
     final bytes = await _artworkQuery.queryArtwork(
-      int.parse(trackId),
+      id,
       ArtworkType.AUDIO,
       format: ArtworkFormat.JPEG,
       size: 500,
@@ -43,6 +47,11 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
         _player.playing ? MediaControl.pause : MediaControl.play,
         MediaControl.skipToNext,
       ],
+      systemActions: const {
+        MediaAction.seek,
+        MediaAction.seekForward,
+        MediaAction.seekBackward,
+      },
       processingState: switch (_player.processingState) {
         ProcessingState.idle => AudioProcessingState.idle,
         ProcessingState.loading => AudioProcessingState.loading,
@@ -54,15 +63,25 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
     ));
   }
   Future<void> playTrack(Track track) async {
-    _lastIndex = null; // Reset to force metadata update
-    _queueItems = [_toMediaItem(track)];
-    queue.add(_queueItems);
-    
-    // Prefetch artwork for the single track
-    await _resolveArtworkUri(track.id);
-    
-    await _player.setAudioSource(_toAudioSource(track, _queueItems.first));
-    await _player.play();
+    try {
+      _lastIndex = null; // Reset to force metadata update
+      _queueItems = [_toMediaItem(track)];
+      queue.add(_queueItems);
+
+      // Prefetch artwork for local tracks only
+      if (track.sourceType == AudioSourceType.local) {
+        await _resolveArtworkUri(track.id);
+      }
+
+      await _player.setAudioSource(_toAudioSource(track, _queueItems.first));
+      await _player.play();
+    } catch (e) {
+      print('PLAYBACK ERROR: $e');
+      // Broadcast error state to UI
+      playbackState.add(playbackState.value.copyWith(
+        processingState: AudioProcessingState.error,
+      ));
+    }
   }
 
   Future<void> loadQueue(List<Track> tracks, {int initialIndex = 0}) async {
@@ -97,19 +116,32 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
   Future<void> dispose() => _player.dispose();
   
   AudioSource _toAudioSource(Track track, MediaItem tag) {
-    return track.sourceType == AudioSourceType.remote
-        ? AudioSource.uri(Uri.parse(track.uri), tag: tag)
-        : AudioSource.uri(Uri.file(track.uri), tag: tag);
+    if (track.sourceType == AudioSourceType.remote) {
+      return AudioSource.uri(
+        Uri.parse(track.uri),
+        tag: tag,
+      );
+    }
+    return AudioSource.uri(Uri.file(track.uri), tag: tag);
   }
 
 
-  MediaItem _toMediaItem(Track track) => MediaItem(
-        id: track.id,
-        title: track.title,
-        artist: track.artist,
-        duration: track.duration,
-        artUri: _artworkCache[track.id],
-      );
+  MediaItem _toMediaItem(Track track) {
+    Uri? artUri;
+    if (_artworkCache.containsKey(track.id)) {
+      artUri = _artworkCache[track.id];
+    } else if (track.artworkUri != null && track.artworkUri!.startsWith('http')) {
+      artUri = Uri.parse(track.artworkUri!);
+    }
+
+    return MediaItem(
+      id: track.id,
+      title: track.title,
+      artist: track.artist,
+      duration: track.duration,
+      artUri: artUri,
+    );
+  }
   @override
   Future<void> onMethodCall(String method, dynamic arguments) async {
   }
@@ -182,7 +214,10 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
 
   AudioSourceHandler() {
     _audioPipeline = AudioPipeline(androidAudioEffects: [_equalizer]);
-    _player = AudioPlayer(audioPipeline: _audioPipeline);
+    _player = AudioPlayer(
+      audioPipeline: _audioPipeline,
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+    );
 
     _player.playbackEventStream.listen(_broadcastState);
     
@@ -194,6 +229,15 @@ class AudioSourceHandler extends BaseAudioHandler with QueueHandler, SeekHandler
       if (index != null && index != _lastIndex) {
         _lastIndex = index;
         _updateMetadata(index);
+      }
+    });
+
+    _player.durationStream.listen((duration) {
+      if (duration != null && duration > Duration.zero) {
+        final current = mediaItem.value;
+        if (current != null && current.duration != duration) {
+          mediaItem.add(current.copyWith(duration: duration));
+        }
       }
     });
   }

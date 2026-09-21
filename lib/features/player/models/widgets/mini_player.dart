@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
+import '../track.dart';
 import '../providers/player_provider.dart';
 
 import 'bar_player.dart';
@@ -43,22 +44,25 @@ class MiniPlayer extends ConsumerWidget {
                       children: [
                         Hero(
                           tag: 'artwork_${track.id}',
-                          child: QueryArtworkWidget(
-                            id: int.parse(track.id),
-                            type: ArtworkType.AUDIO,
-                            artworkWidth: 40,
-                            artworkHeight: 40,
-                            artworkBorder: BorderRadius.circular(8),
-                            nullArtworkWidget: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primaryContainer,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(Icons.music_note, size: 20),
-                            ),
-                          ),
+                          child: track.sourceType == AudioSourceType.remote && track.artworkUri != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    track.artworkUri!,
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => _artworkPlaceholder(context, 40),
+                                  ),
+                                )
+                              : QueryArtworkWidget(
+                                  id: int.tryParse(track.id) ?? 0,
+                                  type: ArtworkType.AUDIO,
+                                  artworkWidth: 40,
+                                  artworkHeight: 40,
+                                  artworkBorder: BorderRadius.circular(8),
+                                  nullArtworkWidget: _artworkPlaceholder(context, 40),
+                                ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -91,6 +95,15 @@ class MiniPlayer extends ConsumerWidget {
       ),
     );
   }
+  Widget _artworkPlaceholder(BuildContext context, double size) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(Icons.music_note, size: size / 2),
+      );
 }
 
 class _MiniControls extends ConsumerWidget {

@@ -10,49 +10,55 @@ class BarPlayer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final position = ref.watch(playerProvider.select((s) => s.position));
-    final duration = ref.watch(playerProvider.select((s) => s.currentTrack?.duration)) ?? Duration.zero;
+    final notifier = ref.read(playerProvider.notifier);
 
-    final maxMs = duration.inMilliseconds > 0
-        ? duration.inMilliseconds.toDouble()
-        : 1.0;
-    final value = position.inMilliseconds
-        .clamp(0, maxMs.toInt())
-        .toDouble();
+    return StreamBuilder<Duration>(
+      stream: notifier.durationStream,
+      builder: (context, durationSnapshot) {
+        final duration = durationSnapshot.data ?? Duration.zero;
 
-    final slider = Slider(
-      value: value,
-      max: maxMs,
-      onChanged: duration == Duration.zero
-          ? null
-          : (v) => ref
-          .read(playerProvider.notifier)
-          .seek(Duration(milliseconds: v.round())),
-    );
+        return StreamBuilder<Duration>(
+          stream: notifier.positionStream,
+          builder: (context, positionSnapshot) {
+            final position = positionSnapshot.data ?? Duration.zero;
 
-    if (!showLabels) return slider;
+            final maxMs = duration.inMilliseconds > 0 ? duration.inMilliseconds.toDouble() : 1.0;
+            final value = position.inMilliseconds.clamp(0, maxMs.toInt()).toDouble();
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        slider,
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(_format(position)),
-              Text(_format(duration)),
-            ],
-          ),
-        ),
-      ],
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Slider(
+                  value: value,
+                  max: maxMs,
+                  onChanged: duration == Duration.zero
+                      ? null
+                      : (v) => notifier.seek(Duration(milliseconds: v.round())),
+                ),
+                if (showLabels)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Text(_format(position)),
+                        const Spacer(),
+                        Text(_format(duration)),
+                      ],
+                    ),
+                  ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
   String _format(Duration d) {
+    final hours = d.inHours;
     final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
+    return hours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
   }
 }

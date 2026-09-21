@@ -9,6 +9,7 @@ import 'package:ota_update/ota_update.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'features/player/models/playlist/widgets/library_screen.dart';
 import 'features/player/models/playlist/widgets/playlist_screen.dart';
+import 'features/player/models/playlist/widgets/discovery_screen.dart';
 import 'features/player/models/widgets/mini_player.dart';
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
@@ -88,13 +89,13 @@ class _UpdateProgressDialogState extends State<_UpdateProgressDialog> {
                 _status = 'Preparing installation...';
                 // Close dialog just before system installer takes over
                 Future.delayed(const Duration(seconds: 1), () {
-                   if (mounted) Navigator.pop(context);
+                   if (context.mounted) Navigator.pop(context);
                 });
               case OtaStatus.INTERNAL_ERROR:
               case OtaStatus.DOWNLOAD_ERROR:
                 _status = 'Error: ${event.value}';
                 Future.delayed(const Duration(seconds: 3), () {
-                  if (mounted) Navigator.pop(context);
+                  if (context.mounted) Navigator.pop(context);
                 });
               default:
                 _status = 'Status: ${event.status}';
@@ -140,7 +141,7 @@ class _Shell extends ConsumerStatefulWidget {
 
 class _ShellState extends ConsumerState<_Shell> {
   int _index = 0;
-  static const _screens = [LibraryScreen(), PlaylistScreen()];
+  static const _screens = [LibraryScreen(), PlaylistScreen(), DiscoveryScreen()];
 
   @override
   Widget build(BuildContext context) {
@@ -173,6 +174,7 @@ class _ShellState extends ConsumerState<_Shell> {
             destinations: const [
               NavigationDestination(icon: Icon(Icons.library_music_outlined), label: 'Library'),
               NavigationDestination(icon: Icon(Icons.queue_music_outlined), label: 'Playlists'),
+              NavigationDestination(icon: Icon(Icons.explore_outlined), label: 'Discovery'),
             ],
           ),
         ],

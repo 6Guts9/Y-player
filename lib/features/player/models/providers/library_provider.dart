@@ -65,6 +65,11 @@ class TrackLibraryNotifier extends StateNotifier<List<Track>> {
 
   Future<void> refresh() => _scan();
 
+  Future<void> scanAndRefresh(String path) async {
+    await _service.scanMedia(path);
+    await _scan();
+  }
+
   Future<int> deleteTracks(Set<String> ids) async {
     try {
       // PhotoManager triggers the native system "Allow delete?" dialog on Android 11+

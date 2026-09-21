@@ -79,9 +79,10 @@ class AppTheme {
       brightness: Brightness.dark,
     );
 
+    // Primary font for English/Latin text
     final baseTextTheme = GoogleFonts.pressStart2pTextTheme(ThemeData.dark().textTheme);
 
-
+    // Explicitly scaling the PressStart2P styles
     final scaledTextTheme = baseTextTheme.copyWith(
       displayLarge: baseTextTheme.displayLarge?.copyWith(fontSize: 28),
       displayMedium: baseTextTheme.displayMedium?.copyWith(fontSize: 24),
@@ -104,6 +105,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
+      // _withArabic ensures ArPixel is ONLY a fallback for characters missing in PressStart2P
       textTheme: _withArabic(scaledTextTheme, const TextStyle(fontFamily: 'ArPixel')),
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,

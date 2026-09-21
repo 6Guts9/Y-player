@@ -173,9 +173,10 @@ class FullPlayer extends ConsumerWidget {
   }
 
   String _formatDuration(Duration d) {
+    final hours = d.inHours;
     final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
     final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
+    return hours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
   }
 
 
@@ -200,12 +201,15 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-class _ArtworkWidget extends StatelessWidget {
+class _ArtworkWidget extends ConsumerWidget {
   final String trackId;
   const _ArtworkWidget({required this.trackId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final track = ref.watch(playerProvider.select((s) => s.currentTrack));
+    final isRemote = track?.sourceType == AudioSourceType.remote;
+
     return Hero(
       tag: 'artwork_$trackId',
       child: Container(
@@ -220,29 +224,42 @@ class _ArtworkWidget extends StatelessWidget {
             ),
           ],
         ),
-        child: QueryArtworkWidget(
-          key: ValueKey(trackId),
-          id: int.parse(trackId),
-          type: ArtworkType.AUDIO,
-          artworkWidth: 280,
-          artworkHeight: 280,
-          artworkBorder: BorderRadius.circular(24),
-          size: 1000,
-          quality: 100,
-          keepOldArtwork: true,
-          nullArtworkWidget: Container(
-            width: 280,
-            height: 280,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: const Icon(Icons.music_note, size: 80),
-          ),
-        ),
+        child: isRemote && track?.artworkUri != null
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Image.network(
+                  track!.artworkUri!,
+                  width: 280,
+                  height: 280,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _placeholder(context),
+                ),
+              )
+            : QueryArtworkWidget(
+                key: ValueKey(trackId),
+                id: int.tryParse(trackId) ?? 0,
+                type: ArtworkType.AUDIO,
+                artworkWidth: 280,
+                artworkHeight: 280,
+                artworkBorder: BorderRadius.circular(24),
+                size: 1000,
+                quality: 100,
+                keepOldArtwork: true,
+                nullArtworkWidget: _placeholder(context),
+              ),
       ),
     );
   }
+
+  Widget _placeholder(BuildContext context) => Container(
+        width: 280,
+        height: 280,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: const Icon(Icons.music_note, size: 80),
+      );
 }
 
 class _PlayerControls extends ConsumerWidget {

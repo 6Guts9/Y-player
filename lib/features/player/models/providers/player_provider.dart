@@ -16,6 +16,9 @@ class PlayerNotifier extends StateNotifier<PlaybackState> {
   final AudioSourceHandler _handler;
   List<Track> _queue = [];
 
+  Stream<Duration> get positionStream => _handler.playbackState.map((s) => s.updatePosition).distinct();
+  Stream<Duration> get durationStream => _handler.mediaItem.map((item) => item?.duration ?? Duration.zero).distinct();
+
   PlayerNotifier(this._handler) : super(const PlaybackState()) {
     _handler.playbackState.listen((s) {
       state = state.copyWith(
@@ -24,6 +27,18 @@ class PlayerNotifier extends StateNotifier<PlaybackState> {
         bufferedPosition: s.bufferedPosition,
         currentTrack: _trackAt(s.queueIndex),
       );
+    });
+
+    _handler.mediaItem.listen((item) {
+      if (item != null && state.currentTrack != null && item.id == state.currentTrack!.id) {
+        if (item.duration != null && item.duration != state.currentTrack!.duration) {
+          state = state.copyWith(
+            currentTrack: state.currentTrack!.copyWith(
+              duration: item.duration,
+            ),
+          );
+        }
+      }
     });
   }
 

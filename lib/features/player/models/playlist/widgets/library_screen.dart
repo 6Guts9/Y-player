@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:y_player/core/themes/wallpaper.dart';
 import '../../../../../core/themes/theme_provider.dart';
+import '../../../../../core/themes/theme_picker_screen.dart';
 import '../../providers/scan_provider.dart';
 import '../../providers/sorting.dart';
 import '../../providers/library_provider.dart';
@@ -241,6 +242,17 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
       IconButton(
         icon: const Icon(Icons.search),
         onPressed: () => setState(() => _isSearchActive = true),
+      ),
+      IconButton(
+        icon: const Icon(Icons.palette),
+        color: Theme.of(context).colorScheme.primary,
+        style: IconButton.styleFrom(
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        ),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ThemePickerScreen()),
+        ),
       ),
       PopupMenuButton<LibrarySortOption>(
         icon: const Icon(Icons.sort),

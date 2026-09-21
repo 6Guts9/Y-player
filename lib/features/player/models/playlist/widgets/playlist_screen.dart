@@ -42,7 +42,11 @@ class PlaylistScreen extends ConsumerWidget {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.palette_outlined),
+            icon: const Icon(Icons.palette),
+            color: Theme.of(context).colorScheme.primary,
+            style: IconButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+            ),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ThemePickerScreen()),
