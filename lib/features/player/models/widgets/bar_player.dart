@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'themed_bar.dart';
+import '../../../../core/themes/theme_provider.dart';
 
 import '../providers/player_provider.dart';
 
@@ -11,6 +13,8 @@ class BarPlayer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(playerProvider.notifier);
+    final isPlaying = ref.watch(playerProvider.select((s) => s.isPlaying));
+    final playerUiThemed = ref.watch(playerUiThemedProvider);
 
     return StreamBuilder<Duration>(
       stream: notifier.durationStream,
@@ -28,13 +32,23 @@ class BarPlayer extends ConsumerWidget {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Slider(
-                  value: value,
-                  max: maxMs,
-                  onChanged: duration == Duration.zero
-                      ? null
-                      : (v) => notifier.seek(Duration(milliseconds: v.round())),
-                ),
+                if (playerUiThemed)
+                  ThemedBar(
+                    value: value,
+                    max: maxMs,
+                    isPlaying: isPlaying,
+                    onChanged: duration == Duration.zero
+                        ? null
+                        : (v) => notifier.seek(Duration(milliseconds: v.round())),
+                  )
+                else
+                  Slider(
+                    value: value,
+                    max: maxMs,
+                    onChanged: duration == Duration.zero
+                        ? null
+                        : (v) => notifier.seek(Duration(milliseconds: v.round())),
+                  ),
                 if (showLabels)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),

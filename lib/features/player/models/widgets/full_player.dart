@@ -8,6 +8,8 @@ import '../providers/player_provider.dart';
 import '../player_status.dart';
 import 'bar_player.dart';
 import '../track.dart';
+import '../../../../core/themes/theme.dart';
+import '../../../../core/themes/theme_provider.dart';
 
 class FullPlayer extends ConsumerWidget {
   const FullPlayer({super.key});
@@ -17,90 +19,153 @@ class FullPlayer extends ConsumerWidget {
     final track = ref.watch(playerProvider.select((s) => s.currentTrack));
     final library = ref.watch(trackLibraryProvider);
     final isFavorite = track != null && library.any((t) => t.id == track.id && t.isFavorite);
+    final preset = ref.watch(themeProvider);
+    final playerUiThemed = ref.watch(playerUiThemedProvider);
+
+    final isCybersigilismThemed = playerUiThemed && preset == AppThemePreset.cybersigilism;
 
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        image: isCybersigilismThemed
+            ? const DecorationImage(
+                image: AssetImage('assets/art2.png'),
+                fit: BoxFit.contain,
+                opacity: 0.43,
+              )
+            : null,
       ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 12),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+      child: Stack(
+        children: [
+          if (isCybersigilismThemed)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: _CRTPainter(Theme.of(context).colorScheme.primary),
                 ),
-                const SizedBox(height: 24),
-                track == null
-                    ? _artworkPlaceholder(context)
-                    : _ArtworkWidget(trackId: track.id),
-                const SizedBox(height: 24),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: Column(
-                    key: ValueKey(track?.id),
-                    children: [
-                      Text(
-                        track?.title ?? 'Nothing playing',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        track?.artist ?? '',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              ),
+            ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
-                      color: isFavorite ? Colors.red : null,
-                      iconSize: 32,
-                      onPressed: track == null
-                          ? null
-                          : () => ref.read(trackLibraryProvider.notifier).toggleFavorite(track.id),
+                    const SizedBox(height: 12),
+                    if (!isCybersigilismThemed)
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    if (isCybersigilismThemed)
+                      _buildCRTHeader(context),
+                    const SizedBox(height: 24),
+                    track == null
+                        ? _artworkPlaceholder(context)
+                        : _ArtworkWidget(trackId: track.id),
+                    const SizedBox(height: 24),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: Column(
+                        key: ValueKey(track?.id),
+                        children: [
+                          Text(
+                            track?.title ?? 'Nothing playing',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: isCybersigilismThemed ? 2 : 0,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            track?.artist ?? '',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  fontStyle: isCybersigilismThemed ? FontStyle.italic : null,
+                                ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.info_outline),
-                      onPressed: track == null ? null : () => _showTrackInfo(context, track),
+                    if (isCybersigilismThemed)
+                      _buildCRTStatus(context),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        IconButton(
+                          icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
+                          color: isFavorite ? Colors.red : null,
+                          iconSize: 32,
+                          onPressed: track == null
+                              ? null
+                              : () => ref.read(trackLibraryProvider.notifier).toggleFavorite(track.id),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.info_outline),
+                          onPressed: track == null ? null : () => _showTrackInfo(context, track),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.graphic_eq_outlined),
+                          onPressed: () => track == null
+                              ? null
+                              : _showEqualizer(context),
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.graphic_eq_outlined),
-                      onPressed: () => track == null
-                          ? null
-                          : _showEqualizer(context),
-                    ),
+                    const SizedBox(height: 12),
+                    const BarPlayer(showLabels: true),
+                    const SizedBox(height: 12),
+                    const _PlayerControls(),
+                    const SizedBox(height: 24),
                   ],
                 ),
-                const SizedBox(height: 12),
-                const BarPlayer(showLabels: true),
-                const SizedBox(height: 12),
-                const _PlayerControls(),
-                const SizedBox(height: 24),
-              ],
+              ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCRTHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text('SUBJECT A-34', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          decoration: BoxDecoration(
+            border: Border.all(color: Theme.of(context).colorScheme.primary, width: 0.5),
+          ),
+          child: const Text('MEM: OK', style: TextStyle(fontSize: 8)),
         ),
+      ],
+    );
+  }
+
+  Widget _buildCRTStatus(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('STATUS: ', style: TextStyle(fontSize: 8)),
+          Text('UNSTABLE', style: TextStyle(fontSize: 8, color: Theme.of(context).colorScheme.primary)),
+          const SizedBox(width: 12),
+          const Text('BITRATE: 320KBPS', style: TextStyle(fontSize: 8)),
+        ],
       ),
     );
   }
@@ -178,9 +243,8 @@ class FullPlayer extends ConsumerWidget {
     final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
     return hours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
   }
-
-
 }
+
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
@@ -311,6 +375,32 @@ class _PlayerControls extends ConsumerWidget {
     );
   }
 }
+
+class _CRTPainter extends CustomPainter {
+  final Color color;
+  _CRTPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.03)
+      ..strokeWidth = 1.0;
+
+    // Subtle scanlines
+    for (double i = 0; i < size.height; i += 3) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    }
+
+    // Subtle vertical scanlines
+    for (double i = 0; i < size.width; i += 3) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class EqualizerSection extends ConsumerWidget {
   const EqualizerSection({super.key});
 

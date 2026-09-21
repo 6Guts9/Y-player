@@ -11,6 +11,7 @@ class ThemePickerScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(themeProvider);
     final wallpaperOn = ref.watch(wallpaperEnabledProvider);
+    final playerUiThemed = ref.watch(playerUiThemedProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Theme')),
@@ -22,6 +23,13 @@ class ThemePickerScreen extends ConsumerWidget {
             secondary: const Icon(Icons.wallpaper),
             value: wallpaperOn,
             onChanged: (_) => ref.read(wallpaperEnabledProvider.notifier).toggle(),
+          ),
+          SwitchListTile(
+            title: const Text('Themed player UI', style: TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: const Text('Use animated and themed components in player screens'),
+            secondary: const Icon(Icons.animation),
+            value: playerUiThemed,
+            onChanged: (_) => ref.read(playerUiThemedProvider.notifier).toggle(),
           ),
           const Divider(),
           ...AppThemePreset.values.map((preset) {

@@ -5,6 +5,7 @@ import 'theme.dart';
 
 const _themePresetKey = 'theme_preset';
 const _wallpaperEnabledKey = 'wallpaper_enabled';
+const _playerUiThemedKey = 'player_ui_themed';
 
 final themeProvider = StateNotifierProvider<ThemeNotifier, AppThemePreset>((ref) {
   return ThemeNotifier();
@@ -12,6 +13,10 @@ final themeProvider = StateNotifierProvider<ThemeNotifier, AppThemePreset>((ref)
 
 final wallpaperEnabledProvider = StateNotifierProvider<WallpaperNotifier, bool>((ref) {
   return WallpaperNotifier();
+});
+
+final playerUiThemedProvider = StateNotifierProvider<PlayerUiThemedNotifier, bool>((ref) {
+  return PlayerUiThemedNotifier();
 });
 
 class ThemeNotifier extends StateNotifier<AppThemePreset> {
@@ -42,5 +47,18 @@ class WallpaperNotifier extends StateNotifier<bool> {
   Future<void> toggle() async {
     state = !state;
     await HiveBoxes.settingsBox.put(_wallpaperEnabledKey, state);
+  }
+}
+
+class PlayerUiThemedNotifier extends StateNotifier<bool> {
+  PlayerUiThemedNotifier() : super(_loadSaved());
+
+  static bool _loadSaved() {
+    return HiveBoxes.settingsBox.get(_playerUiThemedKey) as bool? ?? true;
+  }
+
+  Future<void> toggle() async {
+    state = !state;
+    await HiveBoxes.settingsBox.put(_playerUiThemedKey, state);
   }
 }

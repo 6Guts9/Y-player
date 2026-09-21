@@ -75,8 +75,12 @@ class AppTheme {
 
   static ThemeData _pixelArt() {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF00E5A0),
+      seedColor: const Color(0xFF00E5A0), // Restored Green
       brightness: Brightness.dark,
+    ).copyWith(
+      surface: const Color(0xFF0A0A0A), // Clean dark background
+      primary: const Color(0xFF00E5A0),
+      secondary: const Color(0xFF00805A),
     );
 
     // Primary font for English/Latin text
@@ -113,8 +117,11 @@ class AppTheme {
         elevation: 0,
         centerTitle: false,
       ),
-      cardTheme: const CardThemeData(
-        shape: RoundedRectangleBorder(),
+      cardTheme: CardThemeData(
+        color: colorScheme.surface,
+        shape: const RoundedRectangleBorder(
+          side: BorderSide(color: Color(0xFF00E5A0), width: 1),
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -147,37 +154,31 @@ class AppTheme {
   }
 
   static ThemeData _cybersigilism() {
-    final base = GoogleFonts.cormorantTextTheme(ThemeData.dark().textTheme);
-    final gothicTitle = GoogleFonts.pirataOne();
-
-    final textTheme = base.copyWith(
-      displayLarge: gothicTitle.copyWith(fontSize: base.displayLarge?.fontSize),
-      headlineLarge: gothicTitle.copyWith(fontSize: base.headlineLarge?.fontSize),
-      titleLarge: gothicTitle.copyWith(fontSize: base.titleLarge?.fontSize),
-    );
+    final base = GoogleFonts.shareTechMonoTextTheme(ThemeData.dark().textTheme);
 
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF8A8FA3), // desaturated silver-lavender
+      seedColor: const Color(0xFF9181F4), // Glowing CRT Lavender
       brightness: Brightness.dark,
     ).copyWith(
-      surface: const Color(0xFF0A0A0C),
-      primary: const Color(0xFFD8D8E0),
+      surface: const Color(0xFF050505), // Near pure black for CRT feel
+      primary: const Color(0xFFB4A7FF),
+      secondary: const Color(0xFF4A4A4A),
     );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: colorScheme.surface,
-      textTheme: _withArabic(textTheme, GoogleFonts.amiri()),
+      textTheme: _withArabic(base, GoogleFonts.notoKufiArabic()),
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
       ),
       cardTheme: CardThemeData(
-        color: colorScheme.surface,
+        color: colorScheme.surface.withValues(alpha: 0.8),
         shape: RoundedRectangleBorder(
-          side: BorderSide(color: colorScheme.onSurface.withValues(alpha: 0.2)),
+          side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.3)),
           borderRadius: BorderRadius.zero,
         ),
       ),
@@ -211,7 +212,7 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: colorScheme.surface,
-        indicatorColor: colorScheme.secondary.withOpacity(0.3),
+        indicatorColor: colorScheme.secondary.withValues(alpha: 0.3),
       ),
     );
   }

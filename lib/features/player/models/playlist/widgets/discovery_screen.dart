@@ -186,7 +186,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: Theme.of(context).colorScheme.errorContainer.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.3),
               child: Row(
                 children: [
                   Icon(Icons.info_outline, size: 16, color: Theme.of(context).colorScheme.error),
