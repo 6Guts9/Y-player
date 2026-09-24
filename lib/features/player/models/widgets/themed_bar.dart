@@ -113,6 +113,14 @@ class _BarPainter extends CustomPainter {
     required this.colorScheme,
   });
 
+  double _dampen(double x, double activeWidth) {
+    if (activeWidth <= 0) return 0.0;
+    // Smoothly fade in over first 20px and fade out over last 35px so wave converges to centerY
+    final fadeIn = (x / 20.0).clamp(0.0, 1.0);
+    final fadeOut = ((activeWidth - x) / 35.0).clamp(0.0, 1.0);
+    return fadeIn * fadeOut;
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
@@ -125,7 +133,6 @@ class _BarPainter extends CustomPainter {
     // Draw background bar
     paint.color = colorScheme.surfaceContainerHighest.withValues(alpha: 0.4);
     canvas.drawLine(Offset(0, centerY), Offset(barWidth, centerY), paint);
-
 
     paint.color = colorScheme.primary;
 
@@ -164,10 +171,10 @@ class _BarPainter extends CustomPainter {
       final path = Path();
       path.moveTo(0, centerY);
       for (double i = 0; i <= activeWidth; i += 1.5) {
-        // High-frequency "jitter" mixed with low-frequency "lows" for a spiky look
+        final damp = _dampen(i, activeWidth);
         final baseWave = math.sin((i / freq) + (animationValue * 4 * math.pi) + phase);
         final noise = math.sin((i / (freq * 0.2)) + (animationValue * 10 * math.pi)) * 0.4;
-        final wave = (baseWave + noise) * amp;
+        final wave = (baseWave + noise) * amp * damp;
         
         path.lineTo(i, centerY - wave);
       }
@@ -214,7 +221,10 @@ class _BarPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     const pixelStep = 4.0;
     for (double x = 0; x < activeWidth; x += pixelStep) {
-      canvas.drawRect(Rect.fromLTWH(x, centerY - 6, pixelStep - 1, 12), fillPaint);
+      final w = math.min(pixelStep - 1, activeWidth - x);
+      if (w > 0) {
+        canvas.drawRect(Rect.fromLTWH(x, centerY - 6, w, 12), fillPaint);
+      }
     }
 
     // 4. Draw Oscilloscope Line (Pixelated)
@@ -235,24 +245,26 @@ class _BarPainter extends CustomPainter {
     // High frequency "vibrating" pixel wave
     final flicker = (math.sin(animationValue * 120) * 0.05) + 0.95;
     
-    for (double x = 0; x < activeWidth; x += pixelStep) {
-      // Create a stepped/jagged wave
-      final wave = math.sin((x * 0.15) + (animationValue * 15)) * 14;
-      final noise = math.sin(x * 1.2 + animationValue * 80) * 3;
-      final y = centerY - (wave + noise) * flicker;
+    for (double x = 0; x <= activeWidth; x += pixelStep) {
+      final currentX = math.min(x, activeWidth);
+      final damp = _dampen(currentX, activeWidth);
+      final wave = math.sin((currentX * 0.15) + (animationValue * 15)) * 14;
+      final noise = math.sin(currentX * 1.2 + animationValue * 80) * 3;
+      final y = centerY - (wave + noise) * flicker * damp;
       
-      // Draw vertical "pixel connectors"
-      path.lineTo(x, y);
-      path.lineTo(x + pixelStep, y);
+      final nextX = math.min(x + pixelStep, activeWidth);
+      path.lineTo(currentX, y);
+      path.lineTo(nextX, y);
     }
+    path.lineTo(activeWidth, centerY);
 
     // Draw the glowing line
     canvas.drawPath(path, glowPaint);
     canvas.drawPath(path, linePaint);
 
-    // 5. Vertical "Scan" bar moving across the whole bar
-    final scanX = (animationValue * barWidth * 1.5) % (barWidth * 2);
-    if (scanX < barWidth) {
+    // 5. Vertical "Scan" bar moving across active progress width
+    final scanX = (animationValue * activeWidth * 1.5) % (activeWidth > 0 ? activeWidth * 2 : 1.0);
+    if (scanX < activeWidth) {
       canvas.drawLine(
         Offset(scanX, 0),
         Offset(scanX, size.height),
@@ -275,8 +287,10 @@ class _BarPainter extends CustomPainter {
       ..strokeWidth = 1.0;
 
     for (double i = 0; i <= activeWidth; i += 15) {
-      final h = 10 + math.cos((i / 50) + (animationValue * 2 * math.pi)) * 8;
-      canvas.drawLine(Offset(i, centerY - h), Offset(i + 10, centerY + h), linePaint);
+      final damp = _dampen(i, activeWidth);
+      final h = (10 + math.cos((i / 50) + (animationValue * 2 * math.pi)) * 8) * damp;
+      final xEnd = math.min(i + 10, activeWidth);
+      canvas.drawLine(Offset(i, centerY - h), Offset(xEnd, centerY + h), linePaint);
     }
   }
 
@@ -284,11 +298,13 @@ class _BarPainter extends CustomPainter {
     final centerY = size.height / 2;
     final activeWidth = size.width * progress;
 
+    if (activeWidth <= 0) return;
+
     final gradient = LinearGradient(
       colors: [colorScheme.primary, colorScheme.secondary, colorScheme.tertiary],
       stops: [
         (animationValue - 0.2).clamp(0.0, 1.0),
-        animationValue,
+        animationValue.clamp(0.0, 1.0),
         (animationValue + 0.2).clamp(0.0, 1.0),
       ],
     ).createShader(Rect.fromLTWH(0, 0, activeWidth, size.height));
@@ -303,7 +319,7 @@ class _BarPainter extends CustomPainter {
     final activeWidth = size.width * progress;
 
     // Drawing small dots/dashes to simulate ASCII
-    for (double i = 0; i <= activeWidth; i += 10) {
+    for (double i = 0; i < activeWidth; i += 10) {
       final char = (i + (animationValue * 50)).toInt() % 3 == 0 ? '-' : '=';
       final textPainter = TextPainter(
         text: TextSpan(
@@ -312,7 +328,10 @@ class _BarPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      textPainter.paint(canvas, Offset(i, centerY - 10));
+
+      if (i + textPainter.width <= activeWidth) {
+        textPainter.paint(canvas, Offset(i, centerY - 10));
+      }
     }
   }
 
@@ -320,7 +339,9 @@ class _BarPainter extends CustomPainter {
     final centerY = size.height / 2;
     final activeWidth = size.width * progress;
 
-    // 1. Draw "Old Computer Grid" (more dense)
+    if (activeWidth <= 0) return;
+
+    // 1. Draw "Old Computer Grid" (more dense) up to activeWidth
     final gridPaint = Paint()
       ..color = colorScheme.primary.withValues(alpha: 0.1)
       ..strokeWidth = 0.5;
@@ -341,13 +362,16 @@ class _BarPainter extends CustomPainter {
 
     for (double i = 0; i <= activeWidth; i += 1.0) {
       final x = i;
+      final damp = _dampen(x, activeWidth);
       // High frequency + Low frequency mix for that "scanning" look
       final wave1 = math.sin((x * 0.1) + (animationValue * 20)) * 12;
       final wave2 = math.cos((x * 0.05) - (animationValue * 12)) * 6;
       final jitter = (math.sin(x * 3.0 + animationValue * 100)) * 2.0;
       
-      path.lineTo(x, centerY + (wave1 + wave2 + jitter) * flicker);
+      final y = centerY + (wave1 + wave2 + jitter) * flicker * damp;
+      path.lineTo(x, y);
     }
+    path.lineTo(activeWidth, centerY);
 
     // Outer glow (more intense)
     canvas.drawPath(
@@ -368,7 +392,7 @@ class _BarPainter extends CustomPainter {
         ..strokeWidth = 1.2,
     );
 
-    // 4. Draw horizontal "Scanline" passing through
+    // 4. Draw horizontal "Scanline" passing through active progress
     final scanY = (animationValue * size.height * 2) % (size.height * 3);
     if (scanY < size.height) {
       canvas.drawLine(
