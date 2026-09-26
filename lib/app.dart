@@ -11,6 +11,8 @@ import 'features/player/models/playlist/widgets/library_screen.dart';
 import 'features/player/models/playlist/widgets/playlist_screen.dart';
 import 'features/player/models/playlist/widgets/discovery_screen.dart';
 import 'features/player/models/widgets/mini_player.dart';
+import 'features/player/models/providers/player_provider.dart';
+
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
@@ -24,9 +26,8 @@ class MyApp extends ConsumerWidget {
       home: const _Shell(),
     );
   }
-
-
 }
+
 void _showUpdateNotification(BuildContext context, GitHubRelease release) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -87,7 +88,6 @@ class _UpdateProgressDialogState extends State<_UpdateProgressDialog> {
                 _status = 'Downloading: ${_progress.toInt()}%';
               case OtaStatus.INSTALLING:
                 _status = 'Preparing installation...';
-                // Close dialog just before system installer takes over
                 Future.delayed(const Duration(seconds: 1), () {
                    if (context.mounted) Navigator.pop(context);
                 });
@@ -132,6 +132,7 @@ class _UpdateProgressDialogState extends State<_UpdateProgressDialog> {
     );
   }
 }
+
 class _Shell extends ConsumerStatefulWidget {
   const _Shell({super.key});
 
@@ -141,13 +142,11 @@ class _Shell extends ConsumerStatefulWidget {
 
 class _ShellState extends ConsumerState<_Shell> {
   int _index = 0;
-  static const _screens = [LibraryScreen(), PlaylistScreen(), DiscoveryScreen()];
+  final GlobalKey<LibraryScreenState> libraryKey = GlobalKey<LibraryScreenState>();
 
   @override
   Widget build(BuildContext context) {
-    print('SHELL: build triggered');
     ref.listen(updateCheckProvider, (previous, next) {
-      print('SHELL: update provider emitted state: $next');
       next.whenData((release) {
         if (release != null && mounted) {
           _showUpdateNotification(context, release);
@@ -158,17 +157,52 @@ class _ShellState extends ConsumerState<_Shell> {
     final preset = ref.watch(themeProvider);
     final wallpaperOn = ref.watch(wallpaperEnabledProvider);
     final wallpaper = wallpaperOn ? AppWallpaper.wallpaperFor(preset) : null;
+    final currentTrack = ref.watch(playerProvider.select((s) => s.currentTrack));
+
+    final screens = [
+      LibraryScreen(key: libraryKey),
+      const PlaylistScreen(),
+      const DiscoveryScreen(),
+    ];
 
     return Scaffold(
       body: Stack(
         children: [
           if (wallpaper != null) Positioned.fill(child: wallpaper),
-          _screens[_index],
+          screens[_index],
+          if (currentTrack != null)
+            Positioned(
+              right: 16,
+              bottom: 15,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    setState(() => _index = 0);
+                    libraryKey.currentState?.scrollToCurrentTrack();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.my_location, size: 24, color: Theme.of(context).colorScheme.primary),
+                        const SizedBox(width: 4),
+
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [const MiniPlayer(), NavigationBar(
+        children: [
+          const MiniPlayer(),
+          NavigationBar(
             selectedIndex: _index,
             onDestinationSelected: (i) => setState(() => _index = i),
             destinations: const [

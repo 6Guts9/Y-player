@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 
 enum AudioSourceType {local,remote}
@@ -73,14 +75,38 @@ class Track {
   /// overriding "==" lets you write list.contains(track) or trackA == trackB and get sensible results
   /// hashCode has to be overridden alongside it
   ///it's a Dart rule: if two objects are == equal ,they must produce the same hashcode or things like Set and Map lookups break.
-  factory Track.fromLibrary(SongModel model, {int playCount = 0, bool isFavorite = false}) {
+  factory Track.fromLibrary(
+    SongModel model, {
+    int playCount = 0,
+    bool isFavorite = false,
+    String? customTitle,
+    String? customArtist,
+    String? customArtwork,
+  }) {
+    final rawArtist = model.artist?.trim();
+    final modelArtistValid = rawArtist != null &&
+        rawArtist.isNotEmpty &&
+        rawArtist != '<unknown>' &&
+        rawArtist.toLowerCase() != 'unknown artist';
+
+    final rawTitle = model.title.trim();
+    final modelTitleValid = rawTitle.isNotEmpty &&
+        rawTitle != '<unknown>' &&
+        !rawTitle.startsWith('AUD-') &&
+        !rawTitle.startsWith('VID-');
+
     return Track(
       id: model.id.toString(),
-      title: model.title,
-      artist: model.artist ?? 'Unknown artist',
+      title: (customTitle != null && customTitle.isNotEmpty)
+          ? customTitle
+          : (modelTitleValid ? model.title : model.displayNameWOExt),
+      artist: (customArtist != null && customArtist.isNotEmpty)
+          ? customArtist
+          : (modelArtistValid ? model.artist! : 'Unknown artist'),
       album: model.album,
       uri: model.data,
       sourceType: AudioSourceType.local,
+      artworkUri: customArtwork,
       duration: Duration(milliseconds: model.duration ?? 0),
       dateAdded: model.dateAdded != null
           ? DateTime.fromMillisecondsSinceEpoch(model.dateAdded! * 1000)
@@ -90,6 +116,56 @@ class Track {
     );
   }
 
+  Widget buildArtwork(BuildContext context, {double width = 48, double height = 48, BorderRadius? borderRadius}) {
+    final radius = borderRadius ?? BorderRadius.circular(8);
+    if (artworkUri != null && artworkUri!.isNotEmpty) {
+      if (artworkUri!.startsWith('http')) {
+        return ClipRRect(
+          borderRadius: radius,
+          child: Image.network(
+            artworkUri!,
+            width: width,
+            height: height,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _placeholder(context, width, height, radius),
+          ),
+        );
+      } else {
+        final file = File(artworkUri!);
+        if (file.existsSync()) {
+          return ClipRRect(
+            borderRadius: radius,
+            child: Image.file(
+              file,
+              width: width,
+              height: height,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _placeholder(context, width, height, radius),
+            ),
+          );
+        }
+      }
+    }
+
+    return QueryArtworkWidget(
+      id: int.tryParse(id) ?? 0,
+      type: ArtworkType.AUDIO,
+      artworkWidth: width,
+      artworkHeight: height,
+      artworkBorder: radius,
+      nullArtworkWidget: _placeholder(context, width, height, radius),
+    );
+  }
+
+  Widget _placeholder(BuildContext context, double width, double height, BorderRadius radius) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: radius,
+      ),
+      child: Icon(Icons.music_note, size: width / 2),
+    );
+  }
 }
-
-

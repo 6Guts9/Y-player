@@ -36,11 +36,24 @@ class TrackLibraryNotifier extends StateNotifier<List<Track>> {
     for (final song in songs) {
       // WORKAROUND: Double check if file actually exists to avoid ghost entries from MediaStore
       if (await File(song.data).exists()) {
-        final extras = HiveBoxes.tracksBox.get(song.id.toString());
+        final extrasById = HiveBoxes.tracksBox.get(song.id.toString());
+        final extrasByPath = HiveBoxes.tracksBox.get(song.data);
+        final extras = (extrasByPath is Map ? extrasByPath : null) ??
+            (extrasById is Map ? extrasById : null);
+
+        final playCount = extras?['playCount'] as int? ?? 0;
+        final isFavorite = extras?['isFavorite'] as bool? ?? false;
+        final customTitle = extras?['title'] as String?;
+        final customArtist = extras?['artist'] as String?;
+        final customArtwork = extras?['artworkUri'] as String?;
+
         validTracks.add(Track.fromLibrary(
           song,
-          playCount: extras?['playCount'] as int? ?? 0,
-          isFavorite: extras?['isFavorite'] as bool? ?? false,
+          playCount: playCount,
+          isFavorite: isFavorite,
+          customTitle: customTitle,
+          customArtist: customArtist,
+          customArtwork: customArtwork,
         ));
       }
     }

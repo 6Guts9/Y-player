@@ -1,7 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:on_audio_query/on_audio_query.dart';
 import 'package:y_player/core/themes/wallpaper.dart';
 import '../../../../../core/themes/theme_provider.dart';
 import '../../../../../core/themes/theme_picker_screen.dart';
@@ -71,16 +70,33 @@ class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
 
   @override
-  ConsumerState<LibraryScreen> createState() => _LibraryScreenState();
+  ConsumerState<LibraryScreen> createState() => LibraryScreenState();
 }
 
-class _LibraryScreenState extends ConsumerState<LibraryScreen> {
+class LibraryScreenState extends ConsumerState<LibraryScreen> {
   final Set<String> _selectedIds = {};
   bool get _isSelecting => _selectedIds.isNotEmpty;
 
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   String _searchQuery = '';
   bool _isSearchActive = false;
+
+  void scrollToCurrentTrack() {
+    final currentTrack = ref.read(playerProvider).currentTrack;
+    if (currentTrack == null) return;
+    final rawTracks = ref.read(trackLibraryProvider);
+    final sortOption = ref.read(librarySortProvider);
+    final tracks = sortTracks(rawTracks, sortOption);
+    final index = tracks.indexWhere((t) => t.id == currentTrack.id);
+    if (index != -1 && _scrollController.hasClients) {
+      _scrollController.animateTo(
+        (index * 72.0).clamp(0.0, _scrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
 
   void _toggleSelected(String id) {
     setState(() {
@@ -93,6 +109,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -108,12 +125,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     }).toList();
 
     final tracks = sortTracks(filteredTracks, sortOption);
-final wallpaperOn = ref.watch(wallpaperEnabledProvider);
-final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themeProvider)) != null;
+    final wallpaperOn = ref.watch(wallpaperEnabledProvider);
+    final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themeProvider)) != null;
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: hasWallpaper ? Colors.transparent : null ,
+        backgroundColor: hasWallpaper ? Colors.transparent : null,
         appBar: AppBar(
           title: _buildAppBarTitle(),
           leading: _buildAppBarLeading(),
@@ -273,13 +290,17 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
     if (tracks.isEmpty) {
       return const Center(child: Text('No songs found — pull down to refresh'));
     }
+    final currentTrack = ref.watch(playerProvider.select((s) => s.currentTrack));
+
     return RefreshIndicator(
       onRefresh: () => ref.read(trackLibraryProvider.notifier).refresh(),
       child: ListView.builder(
+        controller: _scrollController,
         itemCount: tracks.length,
         itemBuilder: (context, index) {
           final track = tracks[index];
           final selected = _selectedIds.contains(track.id);
+          final isCurrent = currentTrack != null && track.id == currentTrack.id;
           
           return TweenAnimationBuilder<double>(
             duration: Duration(milliseconds: 300 + (index % 10 * 50)),
@@ -295,28 +316,14 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
               );
             },
             child: ListTile(
-              selected: selected,
+              selected: selected || isCurrent,
+              tileColor: isCurrent ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.4) : null,
               leading: Stack(
                 alignment: Alignment.center,
                 children: [
                   Hero(
                     tag: 'artwork_${track.id}',
-                    child: QueryArtworkWidget(
-                      id: int.parse(track.id),
-                      type: ArtworkType.AUDIO,
-                      artworkWidth: 48,
-                      artworkHeight: 48,
-                      artworkBorder: BorderRadius.circular(8),
-                      nullArtworkWidget: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: selected ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.music_note),
-                      ),
-                    ),
+                    child: track.buildArtwork(context, width: 48, height: 48),
                   ),
                   if (selected)
                     Container(
@@ -327,10 +334,28 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(Icons.check, color: Colors.white),
+                    )
+                  else if (isCurrent)
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.volume_up, color: Colors.white),
                     ),
                 ],
               ),
-              title: Text(track.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+              title: Text(
+                track.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: isCurrent ? FontWeight.bold : null,
+                  color: isCurrent ? Theme.of(context).colorScheme.primary : null,
+                ),
+              ),
               subtitle: Text(track.artist, maxLines: 1, overflow: TextOverflow.ellipsis),
               trailing: _isSelecting
                   ? null
@@ -439,22 +464,7 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
                 itemBuilder: (context, index) {
                   final track = tracks[index];
                   return ListTile(
-                    leading: QueryArtworkWidget(
-                      id: int.parse(track.id),
-                      type: ArtworkType.AUDIO,
-                      artworkWidth: 40,
-                      artworkHeight: 40,
-                      artworkBorder: BorderRadius.circular(4),
-                      nullArtworkWidget: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Icon(Icons.music_note, size: 20),
-                      ),
-                    ),
+                    leading: track.buildArtwork(context, width: 40, height: 40, borderRadius: BorderRadius.circular(4)),
                     title: Text(track.title),
                     subtitle: Text(track.artist),
                     onTap: () {
@@ -574,4 +584,3 @@ final hasWallpaper = wallpaperOn && AppWallpaper.wallpaperFor(ref.watch(themePro
     );
   }
 }
-
